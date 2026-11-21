@@ -1,0 +1,1026 @@
+TeleScope report
+================
+static:  840 beams indexed, 48 decoded, 585ms
+runtime: 20000ms capture, 824 events observed, tracer legacy stopped, 237 msgs, peak mailbox 0
+events:  190 %{observed: 80, not_observed: 103, referenced_only: 7}
+confidence: %{resolved: 64, literal: 39, observed: 80, referenced: 7}
+unresolved call-site patterns: 9 of 36
+
+EVENT                                               STATUS          CONFIDENCE  COUNT   
+bandit.request.exception                            observed        observed    1       handlers=0
+bandit.request.start                                observed        observed    24      handlers=0
+    at lib/bandit/pipeline.ex:40 ({:wrapper, {Bandit.Telemetry, :start_span, 3}, 242})
+    at lib/bandit/pipeline.ex:63 ({:wrapper, {Bandit.Telemetry, :start_span, 3}, 242})
+    measurements: monotonic_time: integer
+    metadata: plug: tuple, telemetry_span_context: reference, connection_telemetry_span_context: reference, conn: %Plug.Conn{}
+bandit.request.stop                                 observed        observed    22      handlers=0
+    measurements: monotonic_time: integer, duration: integer, req_header_end_time: integer, resp_start_time: integer, resp_body_bytes: integer, resp_end_time: integer
+    metadata: plug: tuple, telemetry_span_context: reference, connection_telemetry_span_context: reference, conn: %Plug.Conn{}
+bandit.websocket.start                              not_observed    resolved    -       handlers=0
+    at lib/bandit/websocket/connection.ex:59 ({:wrapper, {Bandit.Telemetry, :start_span, 3}, 242})
+bandit.websocket.stop                               referenced_only referenced  -       handlers=0
+db_connection.connected                             not_observed    literal     -       handlers=0
+    at lib/db_connection/telemetry_listener.ex:97 (:direct)
+db_connection.connection_error                      not_observed    literal     -       handlers=0
+    at lib/db_connection/holder.ex:76 (:direct)
+db_connection.disconnected                          not_observed    literal     -       handlers=0
+    at lib/db_connection/telemetry_listener.ex:112 (:direct)
+demo_app.cache.evict                                observed        observed    1       handlers=0
+demo_app.cache.hit                                  observed        observed    3       handlers=0
+demo_app.cache.miss                                 observed        observed    1       handlers=0
+demo_app.checkout.exception                         not_observed    literal     -       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:71 (:direct)
+demo_app.checkout.start                             observed        observed    8       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:71 (:direct)
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: telemetry_span_context: reference, order_id: integer
+demo_app.checkout.stop                              observed        observed    8       handlers=1
+    at lib/demo_app/instrumentation/orders.ex:71 (:direct)
+    measurements: monotonic_time: integer, duration: integer
+    metadata: items: integer, telemetry_span_context: reference, order_id: integer
+    handler "demo-app-orders" invocations=24 (function shared with ["demo-app-typo"]; not attributable)
+demo_app.dynamic.alpha                              observed        observed    1       handlers=0
+demo_app.dynamic.beta                               observed        observed    1       handlers=0
+demo_app.fulfilment.exception                       observed        observed    1       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:78 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :span, 3}, 17})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: reason: %RuntimeError{}, stacktrace: list, kind: atom, telemetry_span_context: reference, order_id: integer
+demo_app.fulfilment.start                           observed        observed    6       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:78 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :span, 3}, 17})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: telemetry_span_context: reference, order_id: integer
+demo_app.fulfilment.stop                            observed        observed    5       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:78 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :span, 3}, 17})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: telemetry_span_context: reference, order_id: integer
+demo_app.order.created                              referenced_only referenced  -       handlers=1
+    handler "demo-app-typo" invocations=24 (function shared with ["demo-app-orders"]; not attributable)
+demo_app.orders.audited                             observed        observed    1       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:87 (:direct)
+    measurements: count: integer
+    metadata: order_id: integer
+demo_app.orders.cancelled                           observed        observed    6       handlers=1
+    at lib/demo_app/instrumentation/orders.ex:32 (:direct)
+    metadata: reason: atom, order_id: integer
+    handler "demo-app-cancel-log" invocations=6
+demo_app.orders.created                             observed        observed    15      handlers=1
+    at lib/demo_app/instrumentation/orders.ex:19 (:direct)
+    measurements: count: integer, total_cents: integer
+    metadata: currency: binary, order_id: integer, coupon: nil|binary, customer: %DemoApp.Instrumentation.Customer{}, password_hint: binary
+    handler "demo-app-orders" invocations=24 (function shared with ["demo-app-typo"]; not attributable)
+demo_app.payment.captured                           observed        observed    1       handlers=1
+    at lib/demo_app/instrumentation/orders.ex:64 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :emit, 3}, 12})
+    measurements: amount: integer
+    metadata: order_id: integer
+    handler "demo-app-orders" invocations=24 (function shared with ["demo-app-typo"]; not attributable)
+demo_app.payment.failed                             observed        observed    1       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:38 (:direct)
+    measurements: amount: integer
+demo_app.payment.refunded                           not_observed    resolved    -       handlers=1
+    at lib/demo_app/instrumentation/orders.ex:67 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :emit, 3}, 12})
+    handler "demo-app-refund" invocations=0
+demo_app.payment.succeeded                          observed        observed    1       handlers=0
+    at lib/demo_app/instrumentation/orders.ex:38 (:direct)
+    measurements: amount: integer
+demo_app.repo.query                                 observed        observed    113     handlers=0
+    rule: Ecto query event for DemoApp.Repo (default prefix derived from DemoApp.Repo)
+    measurements: decode_time: integer 91%, idle_time: integer 87%, queue_time: integer 87%, query_time: integer, total_time: integer
+    metadata: type: atom, options: list, stacktrace: nil|list, result: tuple, params: list, source: nil|binary, query: binary, repo: module, cast_params: nil|list
+demo_app.search.query                               observed        observed    20      handlers=0
+    measurements: results: integer
+demo_erl.tick                                       observed        observed    1       handlers=0
+    at src/demo_erl_telemetry.erl:6 (:direct)
+    measurements: count: integer
+    metadata: source: module
+demo_erl.work.exception                             not_observed    literal     -       handlers=0
+    at src/demo_erl_telemetry.erl:9 (:direct)
+demo_erl.work.start                                 observed        observed    1       handlers=0
+    at src/demo_erl_telemetry.erl:9 (:direct)
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: n: integer, telemetry_span_context: reference
+demo_erl.work.stop                                  observed        observed    1       handlers=0
+    at src/demo_erl_telemetry.erl:9 (:direct)
+    measurements: monotonic_time: integer, duration: integer
+    metadata: n: integer, telemetry_span_context: reference
+ecto.repo.init                                      observed        observed    1       handlers=0
+    at lib/ecto/repo/supervisor.ex:198 (:direct)
+    measurements: system_time: integer
+    metadata: opts: list, repo: module
+finch.conn_max_idle_time_exceeded                   not_observed    resolved    -       handlers=0
+    at lib/finch/http1/pool.ex:231 ({:wrapper, {Finch.Telemetry, :event, 3}, 290})
+finch.connect.start                                 observed        observed    1       handlers=0
+    at lib/finch/http2/pool.ex:315 ({:wrapper, {Finch.Telemetry, :start, 2}, 251})
+    at lib/finch/http1/conn.ex:41 ({:wrapper, {Finch.Telemetry, :start, 2}, 251})
+    measurements: system_time: integer
+    metadata: name: atom, port: integer, scheme: atom, host: binary
+finch.connect.stop                                  observed        observed    1       handlers=0
+    at lib/finch/http2/pool.ex:319 ({:wrapper, {Finch.Telemetry, :stop, 3}, 266})
+    at lib/finch/http2/pool.ex:328 ({:wrapper, {Finch.Telemetry, :stop, 3}, 266})
+    at lib/finch/http1/conn.ex:55 ({:wrapper, {Finch.Telemetry, :stop, 3}, 266})
+    measurements: duration: integer
+    metadata: name: atom, port: integer, scheme: atom, host: binary
+finch.pool_max_idle_time_exceeded                   not_observed    resolved    -       handlers=0
+    at lib/finch/http1/pool.ex:291 ({:wrapper, {Finch.Telemetry, :event, 3}, 290})
+finch.queue.exception                               not_observed    resolved    -       handlers=0
+    at lib/finch/http1/pool.ex:82 ({:wrapper, {Finch.Telemetry, :exception, 6}, 284})
+finch.queue.start                                   observed        observed    25      handlers=0
+    at lib/finch/http1/pool.ex:54 ({:wrapper, {Finch.Telemetry, :start, 2}, 251})
+    measurements: system_time: integer
+    metadata: name: atom, request: %Finch.Request{}, pool: pid
+finch.queue.stop                                    observed        observed    25      handlers=0
+    at lib/finch/http1/pool.ex:61 ({:wrapper, {Finch.Telemetry, :stop, 4}, 266})
+    measurements: duration: integer, idle_time: integer
+    metadata: name: atom, request: %Finch.Request{}, pool: pid
+finch.recv.exception                                not_observed    resolved    -       handlers=0
+    at lib/finch/http2/pool.ex:61 ({:wrapper, {Finch.Telemetry, :exception, 6}, 284})
+    at lib/finch/http1/conn.ex:175 ({:wrapper, {Finch.Telemetry, :exception, 6}, 284})
+finch.recv.start                                    observed        observed    25      handlers=0
+    at lib/finch/http2/pool.ex:1030 ({:wrapper, {Finch.Telemetry, :start, 2}, 251})
+    at lib/finch/http1/conn.ex:134 ({:wrapper, {Finch.Telemetry, :start, 3}, 251})
+    measurements: system_time: integer, idle_time: integer
+    metadata: name: atom, request: %Finch.Request{}
+finch.recv.stop                                     observed        observed    25      handlers=0
+    at lib/finch/http2/pool.ex:848 ({:wrapper, {Finch.Telemetry, :stop, 3}, 266})
+    at lib/finch/http2/pool.ex:882 ({:wrapper, {Finch.Telemetry, :stop, 3}, 266})
+    at lib/finch/http1/conn.ex:258 ({:wrapper, {Finch.Telemetry, :stop, 4}, 266})
+    measurements: duration: integer, idle_time: integer
+    metadata: error: %Finch.TransportError{} 4%, name: atom, status: nil|integer, request: %Finch.Request{}, headers: list, trailers: list
+finch.request.exception                             not_observed    resolved    -       handlers=0
+    at lib/finch.ex:848 ({:wrapper, {Finch.Telemetry, :span, 3}, 296})
+    at lib/finch.ex:910 ({:wrapper, {Finch.Telemetry, :span, 3}, 296})
+finch.request.start                                 observed        observed    25      handlers=0
+    at lib/finch.ex:848 ({:wrapper, {Finch.Telemetry, :span, 3}, 296})
+    at lib/finch.ex:910 ({:wrapper, {Finch.Telemetry, :span, 3}, 296})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: name: atom, request: %Finch.Request{}, telemetry_span_context: reference
+finch.request.stop                                  observed        observed    25      handlers=0
+    at lib/finch.ex:848 ({:wrapper, {Finch.Telemetry, :span, 3}, 296})
+    at lib/finch.ex:910 ({:wrapper, {Finch.Telemetry, :span, 3}, 296})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: name: atom, request: %Finch.Request{}, result: tuple, telemetry_span_context: reference
+finch.reused_connection                             observed        observed    24      handlers=0
+    at lib/finch/http1/conn.ex:29 ({:wrapper, {Finch.Telemetry, :event, 3}, 290})
+    metadata: name: atom, port: integer, scheme: atom, host: binary
+finch.send.start                                    observed        observed    25      handlers=0
+    at lib/finch/http2/pool.ex:748 ({:wrapper, {Finch.Telemetry, :start, 2}, 251})
+    at lib/finch/http1/conn.ex:120 ({:wrapper, {Finch.Telemetry, :start, 3}, 251})
+    measurements: system_time: integer, idle_time: integer
+    metadata: name: atom, request: %Finch.Request{}
+finch.send.stop                                     observed        observed    25      handlers=0
+    at lib/finch/http2/pool.ex:886 ({:wrapper, {Finch.Telemetry, :stop, 3}, 266})
+    at lib/finch/http2/pool.ex:1029 ({:wrapper, {Finch.Telemetry, :stop, 3}, 266})
+    at lib/finch/http1/conn.ex:133 ({:wrapper, {Finch.Telemetry, :stop, 4}, 266})
+    measurements: duration: integer, idle_time: integer
+    metadata: name: atom, request: %Finch.Request{}
+oban.engine.cancel_all_jobs.exception               not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:340 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.cancel_all_jobs.start                   not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:340 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.cancel_all_jobs.stop                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:340 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.cancel_job.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:333 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.cancel_job.start                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:333 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.cancel_job.stop                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:333 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.check_available.exception               not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:297 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.check_available.start                   observed        observed    5       handlers=0
+    at lib/oban/engine.ex:297 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: conf: %Oban.Config{}, engine: module, telemetry_span_context: reference
+oban.engine.check_available.stop                    observed        observed    5       handlers=0
+    at lib/oban/engine.ex:297 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: conf: %Oban.Config{}, engine: module, queues: list, telemetry_span_context: reference
+oban.engine.check_meta.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:208 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.check_meta.start                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:208 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.check_meta.stop                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:208 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.complete_job.exception                  not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:305 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.complete_job.start                      observed        observed    5       handlers=0
+    at lib/oban/engine.ex:305 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, job: %Oban.Job{}
+oban.engine.complete_job.stop                       observed        observed    5       handlers=0
+    at lib/oban/engine.ex:305 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, job: %Oban.Job{}
+oban.engine.delete_all_jobs.exception               not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:360 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.delete_all_jobs.start                   not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:360 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.delete_all_jobs.stop                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:360 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.delete_job.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:351 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.delete_job.start                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:351 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.delete_job.stop                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:351 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.discard_job.exception                   not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:312 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.discard_job.start                       not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:312 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.discard_job.stop                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:312 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.error_job.exception                     not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:319 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.error_job.start                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:319 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.error_job.stop                          not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:319 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.fetch_jobs.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:257 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.fetch_jobs.start                        observed        observed    2       handlers=0
+    at lib/oban/engine.ex:257 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: meta: map, running: map, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference
+oban.engine.fetch_jobs.stop                         observed        observed    2       handlers=0
+    at lib/oban/engine.ex:257 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: meta: map, running: map, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, jobs: list
+oban.engine.init.exception                          not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:180 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.init.start                              observed        observed    1       handlers=0
+    at lib/oban/engine.ex:180 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference
+oban.engine.init.stop                               observed        observed    1       handlers=0
+    at lib/oban/engine.ex:180 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference
+oban.engine.insert_all_jobs.exception               not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:239 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.insert_all_jobs.start                   not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:239 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.insert_all_jobs.stop                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:239 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.insert_job.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:215 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.insert_job.start                        observed        observed    5       handlers=0
+    at lib/oban/engine.ex:215 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, changeset: %Ecto.Changeset{}
+oban.engine.insert_job.stop                         observed        observed    5       handlers=0
+    at lib/oban/engine.ex:215 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, changeset: %Ecto.Changeset{}, job: %Oban.Job{}
+oban.engine.prune_jobs.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:277 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.prune_jobs.start                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:277 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.prune_jobs.stop                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:277 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.put_meta.exception                      not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:201 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.put_meta.start                          not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:201 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.put_meta.stop                           not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:201 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.refresh.exception                       not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:187 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.refresh.start                           not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:187 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.refresh.stop                            not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:187 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.rescue_jobs.exception                   not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:287 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.rescue_jobs.start                       not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:287 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.rescue_jobs.stop                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:287 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.retry_all_jobs.exception                not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:376 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.retry_all_jobs.start                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:376 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.retry_all_jobs.stop                     not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:376 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.retry_job.exception                     not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:369 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.retry_job.start                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:369 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.retry_job.stop                          not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:369 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.shutdown.exception                      not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:194 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.shutdown.start                          not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:194 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.shutdown.stop                           not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:194 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.snooze_job.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:326 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.snooze_job.start                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:326 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.snooze_job.stop                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:326 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.stage_jobs.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:267 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.stage_jobs.start                        observed        observed    5       handlers=0
+    at lib/oban/engine.ex:267 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, queryable: atom|module
+oban.engine.stage_jobs.stop                         observed        observed    5       handlers=0
+    at lib/oban/engine.ex:267 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+    measurements: monotonic_time: integer, duration: integer
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, queryable: module, jobs: list
+oban.engine.update_job.exception                    not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:387 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.update_job.start                        not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:387 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.engine.update_job.stop                         not_observed    resolved    -       handlers=0
+    at lib/oban/engine.ex:387 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
+oban.job.exception                                  not_observed    literal     -       handlers=0
+    at lib/oban/queues/executor.ex:285 (:direct)
+oban.job.start                                      observed        observed    5       handlers=0
+    at lib/oban/queues/executor.ex:97 (:direct)
+    measurements: system_time: integer
+    metadata: args: map, id: integer, max_attempts: integer, queue: binary, worker: binary, prefix: boolean, conf: %Oban.Config{}, tags: list, attempt: integer, job: %Oban.Job{}
+oban.job.stop                                       observed        observed    5       handlers=0
+    at lib/oban/queues/executor.ex:299 (:direct)
+    measurements: memory: integer, reductions: integer, duration: integer, queue_time: integer
+    metadata: args: map, id: integer, state: atom, max_attempts: integer, queue: binary, worker: binary, prefix: boolean, result: atom, conf: %Oban.Config{}, tags: list, attempt: integer, job: %Oban.Job{}
+oban.notifier.notify.exception                      not_observed    literal     -       handlers=0
+    at lib/oban/notifier.ex:217 (:direct)
+oban.notifier.notify.start                          observed        observed    12      handlers=0
+    at lib/oban/notifier.ex:217 (:direct)
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: conf: %Oban.Config{}, telemetry_span_context: reference, payload: list|map, channel: atom
+oban.notifier.notify.stop                           observed        observed    12      handlers=0
+    at lib/oban/notifier.ex:217 (:direct)
+    measurements: monotonic_time: integer, duration: integer
+    metadata: conf: %Oban.Config{}, telemetry_span_context: reference, payload: list|map, channel: atom
+oban.notifier.switch                                observed        observed    1       handlers=0
+    at lib/oban/sonar.ex:164 (:direct)
+    metadata: status: atom, conf: %Oban.Config{}
+oban.peer.election.exception                        not_observed    literal     -       handlers=0
+    at lib/oban/peers/global.ex:96 (:direct)
+    at lib/oban/peers/database.ex:99 (:direct)
+oban.peer.election.start                            not_observed    literal     -       handlers=0
+    at lib/oban/peers/global.ex:96 (:direct)
+    at lib/oban/peers/database.ex:99 (:direct)
+oban.peer.election.stop                             not_observed    literal     -       handlers=0
+    at lib/oban/peers/global.ex:96 (:direct)
+    at lib/oban/peers/database.ex:99 (:direct)
+oban.plugin.exception                               not_observed    literal     -       handlers=0
+    at lib/oban/reindexer.ex:113 (:direct)
+    at lib/oban/pruner.ex:132 (:direct)
+    at lib/oban/lifeline.ex:134 (:direct)
+oban.plugin.init                                    observed        observed    2       handlers=0
+    at lib/oban/reindexer.ex:102 (:direct)
+    at lib/oban/pruner.ex:116 (:direct)
+    at lib/oban/lifeline.ex:118 (:direct)
+    metadata: conf: %Oban.Config{}, plugin: module
+oban.plugin.start                                   observed        observed    5       handlers=0
+    at lib/oban/reindexer.ex:113 (:direct)
+    at lib/oban/pruner.ex:132 (:direct)
+    at lib/oban/lifeline.ex:134 (:direct)
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: conf: %Oban.Config{}, telemetry_span_context: reference, plugin: module, leader: boolean
+oban.plugin.stop                                    observed        observed    5       handlers=0
+    at lib/oban/reindexer.ex:113 (:direct)
+    at lib/oban/pruner.ex:132 (:direct)
+    at lib/oban/lifeline.ex:134 (:direct)
+    measurements: monotonic_time: integer, duration: integer
+    metadata: conf: %Oban.Config{}, telemetry_span_context: reference, plugin: module, leader: boolean, staged_count: integer, staged_jobs: list
+oban.producer.exception                             not_observed    literal     -       handlers=0
+    at lib/oban/queues/producer.ex:248 (:direct)
+oban.producer.start                                 observed        observed    2       handlers=0
+    at lib/oban/queues/producer.ex:248 (:direct)
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: queue: binary, conf: %Oban.Config{}, telemetry_span_context: reference
+oban.producer.stop                                  observed        observed    2       handlers=0
+    at lib/oban/queues/producer.ex:248 (:direct)
+    measurements: monotonic_time: integer, duration: integer
+    metadata: queue: binary, conf: %Oban.Config{}, telemetry_span_context: reference, dispatched_count: integer
+oban.queue.shutdown                                 not_observed    literal     -       handlers=0
+    at lib/oban/queues/watchman.ex:58 (:direct)
+oban.stager.switch                                  not_observed    literal     -       handlers=0
+    at lib/oban/stager.ex:165 (:direct)
+oban.supervisor.init                                observed        observed    1       handlers=0
+    at lib/oban.ex:1713 (:direct)
+    measurements: system_time: integer
+    metadata: pid: pid, conf: %Oban.Config{}
+phoenix.channel_handled_in                          not_observed    literal     -       handlers=1
+    at lib/phoenix/channel/server.ex:366 (:direct)
+    handler {Phoenix.Logger, [:phoenix, :channel_handled_in]} invocations=0
+phoenix.channel_joined                              not_observed    literal     -       handlers=1
+    at lib/phoenix/channel/server.ex:349 (:direct)
+    handler {Phoenix.Logger, [:phoenix, :channel_joined]} invocations=0
+phoenix.controller.render.exception                 not_observed    literal     -       handlers=0
+    at lib/phoenix/controller.ex:1001 (:direct)
+    at lib/phoenix/controller.ex:1009 (:direct)
+phoenix.controller.render.start                     observed        observed    6       handlers=0
+    at lib/phoenix/controller.ex:1001 (:direct)
+    at lib/phoenix/controller.ex:1009 (:direct)
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: format: binary, template: binary, telemetry_span_context: reference, view: module
+phoenix.controller.render.stop                      observed        observed    6       handlers=0
+    at lib/phoenix/controller.ex:1001 (:direct)
+    at lib/phoenix/controller.ex:1009 (:direct)
+    measurements: monotonic_time: integer, duration: integer
+    metadata: format: binary, template: binary, telemetry_span_context: reference, view: module
+phoenix.endpoint.init                               observed        observed    1       handlers=0
+    at lib/phoenix/endpoint/supervisor.ex:21 (:direct)
+    measurements: system_time: integer
+    metadata: module: module, pid: pid, config: list, otp_app: atom
+phoenix.endpoint.start                              observed        observed    24      handlers=1
+    at lib/demo_app_web/endpoint.ex:1 ({:rule, TeleScope.Discovery.Rules.PlugTelemetry})
+    measurements: system_time: integer
+    metadata: options: list, conn: %Plug.Conn{}
+    handler {Phoenix.Logger, [:phoenix, :endpoint, :start]} invocations=24
+phoenix.endpoint.stop                               observed        observed    24      handlers=1
+    at lib/demo_app_web/endpoint.ex:1 ({:rule, TeleScope.Discovery.Rules.PlugTelemetry})
+    measurements: duration: integer
+    metadata: options: list, conn: %Plug.Conn{}
+    handler {Phoenix.Logger, [:phoenix, :endpoint, :stop]} invocations=24
+phoenix.error_rendered                              not_observed    literal     -       handlers=1
+    at lib/phoenix/endpoint/render_errors.ex:88 (:direct)
+    handler {Phoenix.Logger, [:phoenix, :error_rendered]} invocations=0
+phoenix.live_component.destroyed                    not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/channel.ex:1703 (:direct)
+phoenix.live_component.handle_event.exception       not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/channel.ex:857 (:direct)
+phoenix.live_component.handle_event.start           not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/channel.ex:857 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_component, :handle_event, :start]} invocations=0
+phoenix.live_component.handle_event.stop            not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/channel.ex:857 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_component, :handle_event, :stop]} invocations=0
+phoenix.live_component.update.exception             not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/diff.ex:320 (:direct)
+    at lib/phoenix_live_view/diff.ex:392 (:direct)
+    at lib/phoenix_live_view/diff.ex:907 (:direct)
+phoenix.live_component.update.start                 not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/diff.ex:320 (:direct)
+    at lib/phoenix_live_view/diff.ex:392 (:direct)
+    at lib/phoenix_live_view/diff.ex:907 (:direct)
+phoenix.live_component.update.stop                  not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/diff.ex:320 (:direct)
+    at lib/phoenix_live_view/diff.ex:392 (:direct)
+    at lib/phoenix_live_view/diff.ex:907 (:direct)
+phoenix.live_view.handle_event.exception            not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/channel.ex:568 (:direct)
+phoenix.live_view.handle_event.start                not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/channel.ex:568 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_event, :start]} invocations=0
+phoenix.live_view.handle_event.stop                 not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/channel.ex:568 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_event, :stop]} invocations=0
+phoenix.live_view.handle_params.exception           not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/utils.ex:470 (:direct)
+phoenix.live_view.handle_params.start               not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/utils.ex:470 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_params, :start]} invocations=0
+phoenix.live_view.handle_params.stop                not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/utils.ex:470 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_params, :stop]} invocations=0
+phoenix.live_view.mount.exception                   not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/utils.ex:350 (:direct)
+phoenix.live_view.mount.start                       not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/utils.ex:350 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :mount, :start]} invocations=0
+phoenix.live_view.mount.stop                        not_observed    literal     -       handlers=1
+    at lib/phoenix_live_view/utils.ex:350 (:direct)
+    handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :mount, :stop]} invocations=0
+phoenix.live_view.render.exception                  not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/diff.ex:260 (:direct)
+    at lib/phoenix_live_view/channel.ex:1118 (:direct)
+phoenix.live_view.render.start                      not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/diff.ex:260 (:direct)
+    at lib/phoenix_live_view/channel.ex:1118 (:direct)
+phoenix.live_view.render.stop                       not_observed    literal     -       handlers=0
+    at lib/phoenix_live_view/diff.ex:260 (:direct)
+    at lib/phoenix_live_view/channel.ex:1118 (:direct)
+phoenix.router_dispatch.exception                   observed        observed    1       handlers=0
+    at lib/phoenix/router.ex:440 (:direct)
+    at lib/phoenix/router.ex:447 (:direct)
+    measurements: duration: integer
+    metadata: reason: %Plug.Conn.WrapperError{}, log: atom, stacktrace: list, kind: atom, plug: module, conn: %Plug.Conn{}, path_params: map, pipe_through: list, plug_opts: atom, route: binary
+phoenix.router_dispatch.start                       observed        observed    24      handlers=1
+    at lib/phoenix/router.ex:417 (:direct)
+    measurements: system_time: integer
+    metadata: log: atom, plug: atom|module, conn: %Plug.Conn{}, path_params: map, pipe_through: list, plug_opts: atom, route: binary
+    handler {Phoenix.Logger, [:phoenix, :router_dispatch, :start]} invocations=24
+phoenix.router_dispatch.stop                        observed        observed    23      handlers=0
+    at lib/phoenix/router.ex:423 (:direct)
+    at lib/phoenix/router.ex:433 (:direct)
+    measurements: duration: integer
+    metadata: log: atom, plug: module, conn: %Plug.Conn{}, path_params: map, pipe_through: list, plug_opts: atom, route: binary
+phoenix.socket_connected                            not_observed    literal     -       handlers=1
+    at lib/phoenix/socket.ex:532 (:direct)
+    handler {Phoenix.Logger, [:phoenix, :socket_connected]} invocations=0
+phoenix.socket_drain                                not_observed    literal     -       handlers=1
+    at lib/phoenix/socket/pool_supervisor.ex:116 (:direct)
+    handler {Phoenix.Logger, [:phoenix, :socket_drain]} invocations=0
+telemetry.handler.failure                           observed        observed    1       handlers=0
+    at /home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry/src/telemetry.erl:231 (:direct)
+thousand_island.acceptor.start                      observed        observed    100     handlers=0
+    at lib/thousand_island/acceptor.ex:52 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 2}, 504})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: handler: atom, telemetry_span_context: reference, parent_telemetry_span_context: reference
+thousand_island.connection.async_recv               observed        observed    22      handlers=0
+    measurements: data: binary
+    metadata: handler: module, telemetry_span_context: reference
+thousand_island.connection.ready                    observed        observed    1       handlers=0
+thousand_island.connection.recv                     observed        observed    1       handlers=0
+thousand_island.connection.recv_error               referenced_only referenced  -       handlers=0
+thousand_island.connection.send                     observed        observed    23      handlers=0
+    measurements: data: list
+    metadata: handler: module, telemetry_span_context: reference
+thousand_island.connection.send_error               referenced_only referenced  -       handlers=0
+thousand_island.connection.sendfile                 referenced_only referenced  -       handlers=0
+thousand_island.connection.sendfile_error           referenced_only referenced  -       handlers=0
+thousand_island.connection.socket_shutdown          referenced_only referenced  -       handlers=0
+thousand_island.connection.start                    observed        observed    1       handlers=0
+    at lib/bandit/initial_handler.ex:7 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
+    at lib/bandit/delegating_handler.ex:8 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
+    at lib/bandit/http1/handler.ex:5 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: handler: module, telemetry_span_context: reference, remote_address: tuple, remote_port: integer, parent_telemetry_span_context: reference
+thousand_island.connection.stop                     observed        observed    1       handlers=0
+thousand_island.listener.start                      observed        observed    1       handlers=0
+    at lib/thousand_island/listener.ex:41 ({:wrapper, {ThousandIsland.Telemetry, :start_span, 3}, 504})
+    measurements: monotonic_time: integer, system_time: integer
+    metadata: handler: atom, local_address: tuple, telemetry_span_context: reference, transport_module: module, transport_options: list, local_port: integer
+vm.memory                                           observed        observed    2       handlers=0
+    at /home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry_poller/src/telemetry_poller_builtin.erl:26 (:direct)
+    measurements: atom: integer, atom_used: integer, binary: integer, code: integer, ets: integer, processes: integer, processes_used: integer, system: integer, total: integer
+vm.persistent_term                                  observed        observed    2       handlers=0
+    at /home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry_poller/src/telemetry_poller_builtin.erl:64 (:direct)
+    measurements: count: integer, memory: integer
+vm.system_counts                                    observed        observed    2       handlers=0
+    at /home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry_poller/src/telemetry_poller_builtin.erl:52 (:direct)
+    measurements: port_count: integer, port_limit: integer, process_count: integer, process_limit: integer, atom_limit: integer, atom_count: integer
+vm.total_run_queue_lengths                          observed        observed    2       handlers=0
+    at /home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry_poller/src/telemetry_poller_builtin.erl:32 (:direct)
+    measurements: cpu: integer, io: integer, total: integer
+
+Non-literal call sites (36)
+  [**, :query]                             partial   matches 2 name(s)      lib/demo_app/instrumentation/orders.ex:53
+  [**]                                     dynamic   matches 1 name(s)      lib/ecto/adapters/sql.ex:1315
+  [:bandit, **]                            partial   matches 4 name(s)      lib/bandit/telemetry.ex:242
+  [:bandit, *, *]                          partial   matches 4 name(s)      lib/bandit/telemetry.ex:216
+  [:bandit, *, :exception]                 partial   matches 1 name(s)      lib/bandit/telemetry.ex:210
+  [:bandit, *, :start]                     partial   matches 2 name(s)      lib/bandit/telemetry.ex:170
+  [:bandit, *, :stop]                      partial   matches 1 name(s)      lib/bandit/telemetry.ex:194
+  [:demo_app, **]                          partial   matches 20 name(s)     lib/demo_app/instrumentation/telemetry.ex:11
+  [:demo_app, *, :exception]               partial   matches 2 name(s)      lib/demo_app/instrumentation/telemetry.ex:17
+  [:demo_app, *, :start]                   partial   matches 2 name(s)      lib/demo_app/instrumentation/telemetry.ex:17
+  [:demo_app, *, :stop]                    partial   matches 2 name(s)      lib/demo_app/instrumentation/telemetry.ex:17
+  [:demo_app, :cache, *]                   partial   matches 3 name(s)      lib/demo_app/instrumentation/orders.ex:43
+  [:finch, *, :exception]                  partial   matches 3 name(s)      lib/finch/telemetry.ex:274
+  [:finch, *, :start]                      partial   matches 5 name(s)      lib/finch/telemetry.ex:248
+  [:finch, *, :stop]                       partial   matches 5 name(s)      lib/finch/telemetry.ex:262
+  [:finch, *]                              partial   matches 3 name(s)      lib/finch/telemetry.ex:290
+  [:oban, :engine, *, :exception]          partial   matches 23 name(s)     lib/oban/engine.ex:401
+  [:oban, :engine, *, :start]              partial   matches 23 name(s)     lib/oban/engine.ex:401
+  [:oban, :engine, *, :stop]               partial   matches 23 name(s)     lib/oban/engine.ex:401
+  [:thousand_island, **]                   partial   matches 8 name(s)      lib/thousand_island/telemetry.ex:504
+  [:thousand_island, *, *]                 partial   matches 8 name(s)      lib/thousand_island/acceptor.ex:119
+  [:thousand_island, *, :accept_error]     partial   UNRESOLVED             lib/thousand_island/acceptor.ex:135
+  [:thousand_island, *, :async_recv]       partial   matches 1 name(s)      lib/bandit/initial_handler.ex:7
+  [:thousand_island, *, :emfile]           partial   UNRESOLVED             lib/thousand_island/acceptor.ex:152
+  [:thousand_island, *, :exception]        partial   UNRESOLVED             lib/thousand_island/telemetry.ex:476
+  [:thousand_island, *, :ready]            partial   matches 1 name(s)      lib/bandit/initial_handler.ex:7
+  [:thousand_island, *, :recv]             partial   matches 1 name(s)      lib/thousand_island/socket.ex:122
+  [:thousand_island, *, :recv_error]       partial   UNRESOLVED             lib/thousand_island/socket.ex:126
+  [:thousand_island, *, :send]             partial   matches 1 name(s)      lib/thousand_island/socket.ex:138
+  [:thousand_island, *, :send_error]       partial   UNRESOLVED             lib/thousand_island/socket.ex:142
+  [:thousand_island, *, :sendfile]         partial   UNRESOLVED             lib/thousand_island/socket.ex:157
+  [:thousand_island, *, :sendfile_error]   partial   UNRESOLVED             lib/thousand_island/socket.ex:162
+  [:thousand_island, *, :socket_shutdown]  partial   UNRESOLVED             lib/thousand_island/socket.ex:172
+  [:thousand_island, *, :spawn_error]      partial   UNRESOLVED             lib/thousand_island/acceptor.ex:73
+  [:thousand_island, *, :start]            partial   matches 3 name(s)      lib/thousand_island/telemetry.ex:400
+  [:thousand_island, *, :stop]             partial   matches 1 name(s)      lib/thousand_island/telemetry.ex:450
+
+Diagnostics
+  [error] handler_failure: Handler "demo-app-crasher" raised (:error) 1 time(s) and was detached by :telemetry
+  [warning] consumer_without_emitter: [:demo_app, :order, :created] is consumed by metric demo_app.order.created.count (lib/demo_app_web/telemetry.ex:81), handler "demo-app-typo" (lib/demo_app/instrumentation/handlers.ex:21), runtime handler "demo-app-typo" but no emitter found in scanned code; did you mean [:demo_app, :orders, :created]?
+  [warning] metric_measurement_missing: Metric demo_app.orders.created.total_amount reads measurement :total_amount which was never observed on [:demo_app, :orders, :created] (seen: :count, :total_cents)
+  [warning] sensitive_key: [:demo_app, :orders, :created] metadata contains a key named :password_hint; make sure reporters/loggers attached to this event do not export its value
+  [info] consumer_without_emitter: [:bandit, :websocket, :stop] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:bandit, *, :stop]
+  [info] consumer_without_emitter: [:thousand_island, :connection, :recv_error] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, :recv_error], [:thousand_island, *, *]
+  [info] consumer_without_emitter: [:thousand_island, :connection, :send_error] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :send_error]
+  [info] consumer_without_emitter: [:thousand_island, :connection, :sendfile] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :sendfile]
+  [info] consumer_without_emitter: [:thousand_island, :connection, :sendfile_error] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :sendfile_error]
+  [info] consumer_without_emitter: [:thousand_island, :connection, :socket_shutdown] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, :socket_shutdown], [:thousand_island, *, *]
+  [info] inactive_handler: Handler "demo-app-refund" on [:demo_app, :payment, :refunded] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.Logger, [:phoenix, :channel_handled_in]} on [:phoenix, :channel_handled_in] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.Logger, [:phoenix, :channel_joined]} on [:phoenix, :channel_joined] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.Logger, [:phoenix, :error_rendered]} on [:phoenix, :error_rendered] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_component, :handle_event, :start]} on [:phoenix, :live_component, :handle_event, :start] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_component, :handle_event, :stop]} on [:phoenix, :live_component, :handle_event, :stop] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_event, :start]} on [:phoenix, :live_view, :handle_event, :start] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_event, :stop]} on [:phoenix, :live_view, :handle_event, :stop] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_params, :start]} on [:phoenix, :live_view, :handle_params, :start] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :handle_params, :stop]} on [:phoenix, :live_view, :handle_params, :stop] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :mount, :start]} on [:phoenix, :live_view, :mount, :start] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :mount, :stop]} on [:phoenix, :live_view, :mount, :stop] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.Logger, [:phoenix, :socket_connected]} on [:phoenix, :socket_connected] was not invoked during the capture window
+  [info] inactive_handler: Handler {Phoenix.Logger, [:phoenix, :socket_drain]} on [:phoenix, :socket_drain] was not invoked during the capture window
+  [info] incomplete_span: Span [:bandit, :websocket] has :start but no :stop event was found
+  [info] incomplete_span: Span [:thousand_island, :acceptor] has :start but no :stop event was found
+  [info] incomplete_span: Span [:thousand_island, :listener] has :start but no :stop event was found
+  [info] no_runtime_handler: [:bandit, :request, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:bandit, :request, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:bandit, :request, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:bandit, :websocket, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:db_connection, :connected] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:db_connection, :connection_error] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:db_connection, :disconnected] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :cache, :evict] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :cache, :hit] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :cache, :miss] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :checkout, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :checkout, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :dynamic, :alpha] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :dynamic, :beta] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :fulfilment, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :fulfilment, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :fulfilment, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :orders, :audited] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :payment, :failed] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :payment, :succeeded] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :repo, :query] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_app, :search, :query] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_erl, :tick] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_erl, :work, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_erl, :work, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:demo_erl, :work, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:ecto, :repo, :init] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :conn_max_idle_time_exceeded] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :connect, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :connect, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :pool_max_idle_time_exceeded] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :queue, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :queue, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :queue, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :recv, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :recv, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :recv, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :request, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :request, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :request, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :reused_connection] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :send, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:finch, :send, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :cancel_all_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :cancel_all_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :cancel_all_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :cancel_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :cancel_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :cancel_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :check_available, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :check_available, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :check_available, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :check_meta, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :check_meta, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :check_meta, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :complete_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :complete_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :complete_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :delete_all_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :delete_all_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :delete_all_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :delete_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :delete_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :delete_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :discard_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :discard_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :discard_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :error_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :error_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :error_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :fetch_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :fetch_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :fetch_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :init, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :init, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :init, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :insert_all_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :insert_all_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :insert_all_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :insert_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :insert_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :insert_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :prune_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :prune_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :prune_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :put_meta, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :put_meta, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :put_meta, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :refresh, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :refresh, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :refresh, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :rescue_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :rescue_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :rescue_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :retry_all_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :retry_all_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :retry_all_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :retry_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :retry_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :retry_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :shutdown, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :shutdown, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :shutdown, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :snooze_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :snooze_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :snooze_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :stage_jobs, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :stage_jobs, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :stage_jobs, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :update_job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :update_job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :engine, :update_job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :job, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :job, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :job, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :notifier, :notify, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :notifier, :notify, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :notifier, :notify, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :notifier, :switch] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :peer, :election, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :peer, :election, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :peer, :election, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :plugin, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :plugin, :init] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :plugin, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :plugin, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :producer, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :producer, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :producer, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :queue, :shutdown] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :stager, :switch] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:oban, :supervisor, :init] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :controller, :render, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :controller, :render, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :controller, :render, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :endpoint, :init] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_component, :destroyed] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_component, :handle_event, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_component, :update, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_component, :update, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_component, :update, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_view, :handle_event, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_view, :handle_params, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_view, :mount, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_view, :render, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_view, :render, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :live_view, :render, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :router_dispatch, :exception] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:phoenix, :router_dispatch, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :acceptor, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :connection, :async_recv] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :connection, :ready] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :connection, :recv] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :connection, :send] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :connection, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :connection, :stop] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:thousand_island, :listener, :start] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:vm, :memory] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:vm, :persistent_term] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:vm, :system_counts] has no handler attached at runtime (not necessarily a problem)
+  [info] no_runtime_handler: [:vm, :total_run_queue_lengths] has no handler attached at runtime (not necessarily a problem)
+  [info] schema_drift: [:demo_app, :orders, :created] metadata.coupon: nullable (:binary or nil)
+  [info] schema_drift: [:demo_app, :repo, :query] measurements.decode_time: present in 91.2% of events
+  [info] schema_drift: [:demo_app, :repo, :query] measurements.idle_time: present in 86.7% of events
+  [info] schema_drift: [:demo_app, :repo, :query] measurements.queue_time: present in 86.7% of events
+  [info] schema_drift: [:demo_app, :repo, :query] metadata.stacktrace: nullable (:list or nil)
+  [info] schema_drift: [:demo_app, :repo, :query] metadata.source: nullable (:binary or nil)
+  [info] schema_drift: [:demo_app, :repo, :query] metadata.cast_params: nullable (:list or nil)
+  [info] schema_drift: [:finch, :recv, :stop] metadata.error: present in 4.0% of events
+  [info] schema_drift: [:finch, :recv, :stop] metadata.status: nullable (:integer or nil)
+  [info] schema_drift: [:oban, :engine, :stage_jobs, :start] metadata.queryable: multiple types [:atom, :module]
+  [info] schema_drift: [:oban, :notifier, :notify, :start] metadata.payload: multiple types [:list, :map]
+  [info] schema_drift: [:oban, :notifier, :notify, :stop] metadata.payload: multiple types [:list, :map]
+  [info] schema_drift: [:phoenix, :router_dispatch, :start] metadata.plug: multiple types [:atom, :module]
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :socket_shutdown] at lib/thousand_island/socket.ex:172 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :recv_error] at lib/thousand_island/socket.ex:126 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :exception] at lib/thousand_island/telemetry.ex:476 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :spawn_error] at lib/thousand_island/acceptor.ex:73, lib/thousand_island/acceptor.ex:90, lib/thousand_island/acceptor.ex:105 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :send_error] at lib/thousand_island/socket.ex:142 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :emfile] at lib/thousand_island/acceptor.ex:152 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :accept_error] at lib/thousand_island/acceptor.ex:135 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :sendfile] at lib/thousand_island/socket.ex:157 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :sendfile_error] at lib/thousand_island/socket.ex:162 could not be resolved statically; a runtime capture can discover the concrete names
+
+# ---------------------------------------------------------------------------
+# TeleScope metric SUGGESTIONS - generated 2026-11-21
+# Review every entry before use: units, tags and metric types are inferred
+# from static analysis and a finite runtime capture, not from documentation.
+# Confidence: high = measurement observed, medium = :telemetry.span contract,
+# low = naming heuristic only.
+# ---------------------------------------------------------------------------
+def metrics do
+  [
+    # [high] exception event of span [:bandit, :request]: count failures
+    counter("bandit.request.exception.count"),
+
+    # [high] stop event of span [:bandit, :request]; duration observed at runtime; verify the unit is native time
+    summary("bandit.request.stop.duration", unit: {:native, :millisecond}),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.cache.evict.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.cache.hit.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.cache.miss.count"),
+
+    # [medium] exception event of span [:demo_app, :checkout]: count failures
+    counter("demo_app.checkout.exception.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.dynamic.alpha.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.dynamic.beta.count"),
+
+    # [high] exception event of span [:demo_app, :fulfilment]: count failures
+    counter("demo_app.fulfilment.exception.count", tags: [:kind]),
+
+    # [high] stop event of span [:demo_app, :fulfilment]; duration observed at runtime
+    summary("demo_app.fulfilment.stop.duration", unit: {:native, :millisecond}),
+
+    # [low] :count looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("demo_app.orders.audited.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.orders.cancelled.count", tags: [:reason]),
+
+    # [low] :count looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("demo_app.orders.created.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.payment.captured.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.payment.failed.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.payment.succeeded.count"),
+
+    # [high] standalone event: count occurrences
+    counter("demo_app.search.query.count"),
+
+    # [low] :count looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("demo_erl.tick.count", tags: [:source]),
+
+    # [medium] exception event of span [:demo_erl, :work]: count failures
+    counter("demo_erl.work.exception.count"),
+
+    # [high] stop event of span [:demo_erl, :work]; duration observed at runtime
+    summary("demo_erl.work.stop.duration", unit: {:native, :millisecond}),
+
+    # [high] standalone event: count occurrences
+    counter("ecto.repo.init.count", tags: [:repo]),
+
+    # [high] stop event of span [:finch, :connect]; duration observed at runtime; verify the unit is native time
+    summary("finch.connect.stop.duration", unit: {:native, :millisecond}, tags: [:name, :scheme]),
+
+    # [medium] exception event of span [:finch, :queue]: count failures
+    counter("finch.queue.exception.count"),
+
+    # [high] stop event of span [:finch, :queue]; duration observed at runtime; verify the unit is native time
+    summary("finch.queue.stop.duration", unit: {:native, :millisecond}, tags: [:name]),
+
+    # [medium] exception event of span [:finch, :recv]: count failures
+    counter("finch.recv.exception.count"),
+
+    # [high] stop event of span [:finch, :recv]; duration observed at runtime; verify the unit is native time
+    summary("finch.recv.stop.duration", unit: {:native, :millisecond}, tags: [:name]),
+
+    # [medium] exception event of span [:finch, :request]: count failures
+    counter("finch.request.exception.count"),
+
+    # [high] stop event of span [:finch, :request]; duration observed at runtime
+    summary("finch.request.stop.duration", unit: {:native, :millisecond}, tags: [:name]),
+
+    # [high] standalone event: count occurrences
+    counter("finch.reused_connection.count", tags: [:name, :scheme]),
+
+    # [high] stop event of span [:finch, :send]; duration observed at runtime; verify the unit is native time
+    summary("finch.send.stop.duration", unit: {:native, :millisecond}, tags: [:name]),
+
+    # [medium] exception event of span [:oban, :engine, :check_available]: count failures
+    counter("oban.engine.check_available.exception.count"),
+
+    # [high] stop event of span [:oban, :engine, :check_available]; duration observed at runtime
+    summary("oban.engine.check_available.stop.duration", unit: {:native, :millisecond}, tags: [:engine]),
+
+    # [medium] exception event of span [:oban, :engine, :complete_job]: count failures
+    counter("oban.engine.complete_job.exception.count"),
+
+    # [high] stop event of span [:oban, :engine, :complete_job]; duration observed at runtime
+    summary("oban.engine.complete_job.stop.duration", unit: {:native, :millisecond}, tags: [:engine]),
+
+    # [medium] exception event of span [:oban, :engine, :fetch_jobs]: count failures
+    counter("oban.engine.fetch_jobs.exception.count"),
+
+    # [high] stop event of span [:oban, :engine, :fetch_jobs]; duration observed at runtime
+    summary("oban.engine.fetch_jobs.stop.duration", unit: {:native, :millisecond}, tags: [:engine]),
+
+    # [medium] exception event of span [:oban, :engine, :init]: count failures
+    counter("oban.engine.init.exception.count"),
+
+    # [high] stop event of span [:oban, :engine, :init]; duration observed at runtime
+    summary("oban.engine.init.stop.duration", unit: {:native, :millisecond}, tags: [:engine]),
+
+    # [medium] exception event of span [:oban, :engine, :insert_job]: count failures
+    counter("oban.engine.insert_job.exception.count"),
+
+    # [high] stop event of span [:oban, :engine, :insert_job]; duration observed at runtime
+    summary("oban.engine.insert_job.stop.duration", unit: {:native, :millisecond}, tags: [:engine]),
+
+    # [medium] exception event of span [:oban, :engine, :stage_jobs]: count failures
+    counter("oban.engine.stage_jobs.exception.count"),
+
+    # [high] stop event of span [:oban, :engine, :stage_jobs]; duration observed at runtime
+    summary("oban.engine.stage_jobs.stop.duration", unit: {:native, :millisecond}, tags: [:engine, :queryable]),
+
+    # [medium] exception event of span [:oban, :job]: count failures
+    counter("oban.job.exception.count"),
+
+    # [high] stop event of span [:oban, :job]; duration observed at runtime; verify the unit is native time
+    summary("oban.job.stop.duration", unit: {:native, :millisecond}, tags: [:prefix, :result, :state]),
+
+    # [medium] exception event of span [:oban, :notifier, :notify]: count failures
+    counter("oban.notifier.notify.exception.count"),
+
+    # [high] stop event of span [:oban, :notifier, :notify]; duration observed at runtime
+    summary("oban.notifier.notify.stop.duration", unit: {:native, :millisecond}, tags: [:channel]),
+
+    # [high] standalone event: count occurrences
+    counter("oban.notifier.switch.count", tags: [:status]),
+
+    # [medium] exception event of span [:oban, :plugin]: count failures
+    counter("oban.plugin.exception.count"),
+
+    # [high] standalone event: count occurrences
+    counter("oban.plugin.init.count", tags: [:plugin]),
+
+    # [high] stop event of span [:oban, :plugin]; duration observed at runtime
+    summary("oban.plugin.stop.duration", unit: {:native, :millisecond}, tags: [:leader, :plugin]),
+
+    # [medium] exception event of span [:oban, :producer]: count failures
+    counter("oban.producer.exception.count"),
+
+    # [high] stop event of span [:oban, :producer]; duration observed at runtime
+    summary("oban.producer.stop.duration", unit: {:native, :millisecond}),
+
+    # [high] standalone event: count occurrences
+    counter("oban.supervisor.init.count"),
+
+    # [medium] exception event of span [:phoenix, :controller, :render]: count failures
+    counter("phoenix.controller.render.exception.count"),
+
+    # [high] stop event of span [:phoenix, :controller, :render]; duration observed at runtime
+    summary("phoenix.controller.render.stop.duration", unit: {:native, :millisecond}, tags: [:view]),
+
+    # [high] standalone event: count occurrences
+    counter("phoenix.endpoint.init.count", tags: [:module, :otp_app]),
+
+    # [high] exception event of span [:phoenix, :router_dispatch]: count failures
+    counter("phoenix.router_dispatch.exception.count", tags: [:kind, :log, :plug, :plug_opts]),
+
+    # [high] standalone event: count occurrences
+    counter("thousand_island.connection.async_recv.count", tags: [:handler]),
+
+    # [high] standalone event: count occurrences
+    counter("thousand_island.connection.ready.count"),
+
+    # [high] standalone event: count occurrences
+    counter("thousand_island.connection.recv.count"),
+
+    # [high] standalone event: count occurrences
+    counter("thousand_island.connection.send.count", tags: [:handler]),
+
+    # [high] stop event without a :duration measurement
+    counter("thousand_island.connection.stop.count"),
+
+    # [low] :total looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("vm.memory.total"),
+
+    # [low] :count looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("vm.persistent_term.count"),
+
+    # [low] :port_count looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("vm.system_counts.port_count"),
+
+    # [low] :process_count looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("vm.system_counts.process_count"),
+
+    # [low] :atom_count looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("vm.system_counts.atom_count"),
+
+    # [low] :total looks like a gauge (size/count/total); last_value keeps the latest reading
+    last_value("vm.total_run_queue_lengths.total")
+  ]
+end

@@ -1,0 +1,12 @@
+/_build/
+/deps/
+/cover/
+erl_crash.dump
+*.ez
+/tmp/
+/spike/demo_app/_build/
+/spike/demo_app/deps/
+/spike/demo_app/*.db*
+/test/fixtures/beams/
+/_build_matrix/
+.elixir_ls/

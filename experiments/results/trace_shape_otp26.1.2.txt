@@ -1,0 +1,28 @@
+OTP 26 / Elixir 1.17.0
+
+[H1: no arity flag, ms {message,'$1'}, global] telemetry loaded?=true trace_pattern matched=[1, 1]
+
+== H1: no arity flag, ms {message,'$1'}, global ==
+  call telemetry.execute ARGS(len=3) extra=[:exp, :plain]  [flat_size=2044 words]
+  call telemetry.execute_lazy ARGS(len=3) extra=[:exp, :lazy]  [flat_size=29 words]
+
+[H2: arity flag, ms {message,'$1'}, global] telemetry loaded?=true trace_pattern matched=[1, 1]
+
+== H2: arity flag, ms {message,'$1'}, global ==
+  call telemetry.execute/3 extra=[:exp, :plain]  [flat_size=14 words]
+  call telemetry.execute_lazy/3 extra=[:exp, :lazy]  [flat_size=14 words]
+
+[H3: arity flag, ms {message,'$1'}, local] telemetry loaded?=true trace_pattern matched=[1, 1]
+
+== H3: arity flag, ms {message,'$1'}, local ==
+  call telemetry.execute/3 extra=[:exp, :plain]  [flat_size=14 words]
+  call telemetry.execute/3 extra=[:exp, :span, :start]  [flat_size=16 words]
+  call telemetry.execute/3 extra=[:exp, :span, :stop]  [flat_size=16 words]
+  call telemetry.execute_lazy/3 extra=[:exp, :lazy]  [flat_size=14 words]
+
+[H5: arity + suppression of [:exp, :plain], local] telemetry loaded?=true trace_pattern matched=[1, 1]
+
+== H5: arity + suppression of [:exp, :plain], local ==
+  call telemetry.execute/3 extra=[:exp, :span, :start]  [flat_size=16 words]
+  call telemetry.execute/3 extra=[:exp, :span, :stop]  [flat_size=16 words]
+  call telemetry.execute_lazy/3 extra=[:exp, :lazy]  [flat_size=14 words]

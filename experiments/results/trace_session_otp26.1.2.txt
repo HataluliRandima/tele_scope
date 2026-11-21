@@ -1,0 +1,18 @@
+OTP 26
+
+== S1: second legacy tracer on an already-traced process ==
+
+18:10:14.888 [error] ** can only have one tracer per process
+
+
+  second erlang:trace on same pid => {:raised, %ArgumentError{message: "errors were found at the given arguments:\n\n  * 1st argument: invalid spec for pid or port\n"}}
+  tracer now: {:tracer, #PID<0.169.0>} (dbg_like=#PID<0.169.0> ours=#PID<0.170.0>)
+  erlang:trace(:all) with another tracer active => 64
+  worker tracer after :all => {:tracer, #PID<0.169.0>}
+
+== S2: legacy tracer death cleanup ==
+  before death: [arity: [:s2, :before]]
+  trace_info(execute/3, :match_spec) after tracer death => {:match_spec, [{[:"$1", :_, :_], [], [message: :"$1"]}]}
+  self() flags after tracer death => {:flags, []}
+
+(S3-S5 skipped: :trace module not available on this OTP)

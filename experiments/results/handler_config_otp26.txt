@@ -1,0 +1,10 @@
+OTP 26 (3 interleaved rounds, min of 7 each; concurrent = 12 procs wall-clock ns/event, min of 5)
+round 1 (base 196 ns): config nil: +35 | config small map (7 ints): +64 | config with ETS tid + counters + atomics refs: +230 | config = small key, persistent_term lookup: +128
+round 2 (base 181 ns): config nil: +73 | config small map (7 ints): +156 | config with ETS tid + counters + atomics refs: +179 | config = small key, persistent_term lookup: +80
+round 3 (base 136 ns): config nil: +60 | config small map (7 ints): +90 | config with ETS tid + counters + atomics refs: +159 | config = small key, persistent_term lookup: +104
+
+concurrent, 12 procs, base 37.3 ns/event
+  config nil                                         64.1 ns (+26.8)
+  config small map (7 ints)                          90.1 ns (+52.9)
+  config with ETS tid + counters + atomics refs      221.3 ns (+184.1)
+  config = small key, persistent_term lookup         93.6 ns (+56.3)

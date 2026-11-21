@@ -1,0 +1,9 @@
+OTP 26 backend=legacy
+metadata                no-trace   suppressed   delta
+empty map                  158 ns     1873 ns  +1715 ns
+4 keys                     206 ns     1085 ns  +879 ns
+30 small int keys          219 ns     1234 ns  +1015 ns
+40 keys (HAMT)             245 ns     1089 ns  +844 ns
+10KB binary                193 ns     1016 ns  +823 ns
+100-element list           190 ns      967 ns  +776 ns
+1000-element list          192 ns      948 ns  +757 ns

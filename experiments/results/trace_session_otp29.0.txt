@@ -1,0 +1,34 @@
+OTP 29
+
+== S1: second legacy tracer on an already-traced process ==
+
+18:10:21.135 [error] ** can only have one tracer per process
+
+
+  second erlang:trace on same pid => {:raised, %ArgumentError{message: "errors were found at the given arguments:\n\n  * 1st argument: invalid spec for pid or port\n"}}
+  tracer now: {:tracer, #PID<0.172.0>} (dbg_like=#PID<0.172.0> ours=#PID<0.173.0>)
+  erlang:trace(:all) with another tracer active => 72
+  worker tracer after :all => {:tracer, #PID<0.172.0>}
+
+== S2: legacy tracer death cleanup ==
+  before death: [arity: [:s2, :before]]
+  trace_info(execute/3, :match_spec) after tracer death => {:match_spec, [{[:"$1", :_, :_], [], [message: :"$1"]}]}
+  self() flags after tracer death => {:flags, []}
+
+== S3: legacy dbg-like tracer + TeleScope session, same function ==
+  session procs=75 funs=1
+  legacy got:  [args: [:s3, :both]]
+  session got: [arity: [:s3, :both]]
+
+== S4: destroy session ==
+  legacy got:  [args: [:s4, :after_destroy]]
+  session got: []
+  legacy pattern still: {:traced, :global}
+
+== S5: session lifetime ==
+  owner alive -> session got: [arity: [:s5, :owner_alive]]
+  sessions: [telescope_gc: 1, legacy: :default]
+  owner dead -> session got: []
+  sessions: [legacy: :default]
+  tracer dead, handle alive -> sessions: [telescope_tdead: 2, legacy: :default]
+  tracer dead -> session_info(execute/3): {:all, [traced: :local, match_spec: [{[:"$1", :_, :_], [], [message: :"$1"]}], meta: false, meta_match_spec: false, call_memory: false, call_time: false, call_count: false]}

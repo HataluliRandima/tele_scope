@@ -1,0 +1,39 @@
+
+OTP 29 / Elixir 1.20.1 / schedulers 12 / N=200000
+tracing backend: session
+
+== small metadata (4 keys), single process
+baseline: no handlers                                             190 ns   +     0 ns
+reference: one no-op handler                                      245 ns   +    55 ns
+observer (shape recording)                                       1348 ns   +  1158 ns
+observer, sample_rate 0.1                                         664 ns   +   473 ns
+observer after max_events reached (no-op path)                    408 ns   +   218 ns
+tracer, name pre-suppressed (known)                               543 ns   +   353 ns
+tracer, discovered then suppressed (5,000 known names)            603 ns   +   413 ns
+tracer WITHOUT suppression (worst case, every call sends)        1622 ns   +  1432 ns
+    -> tracer peak mailbox 546838, messages 1414000
+one no-op handler + call_count invocation tracking                220 ns   +    30 ns
+full capture: observer + tracer (known name)                     1771 ns   +  1581 ns
+
+== large metadata (30 keys, struct, 10KB binary), single process
+baseline: no handlers                                             132 ns   +     0 ns
+reference: one no-op handler                                      181 ns   +    48 ns
+observer (shape recording)                                       2366 ns   +  2234 ns
+observer, sample_rate 0.1                                         642 ns   +   510 ns
+observer after max_events reached (no-op path)                    328 ns   +   195 ns
+tracer, name pre-suppressed (known)                               566 ns   +   434 ns
+tracer, discovered then suppressed (5,000 known names)            533 ns   +   401 ns
+tracer WITHOUT suppression (worst case, every call sends)        1385 ns   +  1253 ns
+    -> tracer peak mailbox 560319, messages 1414000
+one no-op handler + call_count invocation tracking                210 ns   +    78 ns
+full capture: observer + tracer (known name)                     3325 ns   +  3192 ns
+
+== concurrency: 12 processes, same event (ETS row contention), small metadata
+baseline: no handlers                                              59 ns   +     0 ns
+reference: one no-op handler                                       97 ns   +    38 ns
+observer (per-scheduler striped rows)                             531 ns   +   472 ns
+tracer, name pre-suppressed                                       259 ns   +   200 ns
+
+== memory
+observer ETS after 200 events x 5 shapes: 596424 bytes (596.4 KB)
+after +100,000 events of an existing shape: 598280 bytes (growth 1856)

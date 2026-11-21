@@ -1,0 +1,13 @@
+Resolving Hex dependencies...
+Resolution completed in 0.047s
+Unchanged:
+  telemetry 1.4.3
+All dependencies have been fetched
+Running ExUnit with seed: 563193, max_cases: 24
+Excluding tags: [:bench]
+Including tags: [:peer]
+
+.........................................................................................
+Finished in 4.8 seconds (0.9s async, 3.9s sync)
+
+Result: 89 passed (2 doctests, 87 tests)

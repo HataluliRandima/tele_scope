@@ -1,0 +1,24 @@
+OTP 26
+
+
+
+
+
+Q1 list_handlers([]) -> 5 entries: [{"closure", [:x, :y, :z]}, {"many", [:c, :d]}, {"anon", [:c, :d]}, {"ext", [:a, :b]}, {"many", [:a, :b]}]
+   list_handlers([:a]) -> ["ext", "many"]
+   list_handlers([:a, :b, :c]) (longer than event) -> []
+
+   handler MFAs (local funs resolved to underlying function): [{MyHandlers, :"-closure_handler/1-fun-0-", 5}, {MyHandlers, :handle, 4}, {MyHandlers, :"-anon_handler/0-fun-0-", 4}]
+
+Q2 legacy call_count:
+   trace_pattern {MyHandlers, :"-closure_handler/1-fun-0-", 5} -> 1
+   trace_pattern {MyHandlers, :handle, 4} -> 1
+   trace_pattern {MyHandlers, :"-anon_handler/0-fun-0-", 4} -> 1
+   {MyHandlers, :"-closure_handler/1-fun-0-", 5} -> {:call_count, 0}
+   {MyHandlers, :handle, 4} -> {:call_count, 8}
+   {MyHandlers, :"-anon_handler/0-fun-0-", 4} -> {:call_count, 2}
+
+Q4 failing handler:
+
+
+   failure event: handler_id="crasher" kind=:error

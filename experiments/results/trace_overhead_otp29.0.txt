@@ -1,0 +1,17 @@
+OTP 29 / Elixir 1.20.1 / schedulers 12
+-- small md (flat_size=13 words), 0 handlers --
+baseline (no tracing)                                      159.9 ns/call  peak_mailbox=0 msgs=0 names=0
+trace, no arity, ms=true (full args)                       1544.7 ns/call  peak_mailbox=662 msgs=201000 names=1
+trace, arity, ms {message,'$1'} (name only)                1751.7 ns/call  peak_mailbox=934 msgs=201000 names=1
+trace, arity, name suppressed (known)                      540.7 ns/call  peak_mailbox=0 msgs=0 names=0
+trace, arity, 200 suppress clauses, name NOT in list       4841.1 ns/call  peak_mailbox=1235 msgs=201000 names=1
+trace, arity, 200 suppress clauses + known (last)          2625.6 ns/call  peak_mailbox=0 msgs=0 names=0
+-- large md (flat_size=1018 words), 0 handlers --
+baseline (no tracing)                                      120.9 ns/call  peak_mailbox=0 msgs=0 names=0
+trace, no arity, ms=true (full args)                       5609.8 ns/call  peak_mailbox=42405 msgs=201000 names=1
+trace, arity, ms {message,'$1'} (name only)                1304.5 ns/call  peak_mailbox=927 msgs=201000 names=1
+trace, arity, name suppressed (known)                      620.6 ns/call  peak_mailbox=0 msgs=0 names=0
+trace, arity, 200 suppress clauses, name NOT in list       4148.1 ns/call  peak_mailbox=882 msgs=201000 names=1
+trace, arity, 200 suppress clauses + known (last)          2906.5 ns/call  peak_mailbox=0 msgs=0 names=0
+-- with one no-op handler attached --
+baseline + 1 no-op handler                                 160.2 ns/call  peak_mailbox=0 msgs=0 names=0

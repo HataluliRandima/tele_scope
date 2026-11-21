@@ -1,0 +1,10 @@
+Resolving Hex dependencies...
+Resolution completed in 0.036s
+All dependencies are up to date
+Running ExUnit with seed: 332174, max_cases: 24
+Excluding tags: [:bench]
+Including tags: [:peer]
+
+.........................................................................................
+Finished in 4.8 seconds (0.9s async, 3.8s sync)
+2 doctests, 87 tests, 0 failures

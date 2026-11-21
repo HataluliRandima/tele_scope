@@ -1,0 +1,14 @@
+==> tele_scope
+Compiling 2 files (.ex)
+OTP 26 / Elixir 1.17.0 / schedulers 12
+
+== Phoenix spike app (36 apps)
+   beams=840 candidates=48 decoded=48 analyzed=62 wrapper_rounds=2 no_debug_info=0 errors=0
+   wall ms: min=524 median=596 max=998  (index 427 ms / analyze 564 ms in run 1)
+   peak extra memory: 47.2 MB
+
+== stress: OTP + Elixir installation (37 apps)
+   beams=1263 candidates=0 decoded=0 analyzed=0 wrapper_rounds=1 no_debug_info=0 errors=0
+   wall ms: min=416 median=442 max=1117  (index 1043 ms / analyze 73 ms in run 1)
+   peak extra memory: 14.1 MB
+

@@ -1,0 +1,16 @@
+OTP 26
+match_spec_test known: {:ok, false, [], []}
+match_spec_test unknown: {:ok, [:b], [], []}
+baseline                                                   219.9 ns/call  peak_mailbox=0 msgs=0 names=0
+map guard, 0 known, name NOT known                         2128.6 ns/call  peak_mailbox=1053 msgs=201000 names=1
+map guard, 1 known, name known (suppressed)                924.5 ns/call  peak_mailbox=0 msgs=0 names=0
+map guard, 1 known, name NOT known                         1977.2 ns/call  peak_mailbox=1057 msgs=201000 names=1
+map guard, 2 known, name known (suppressed)                818.2 ns/call  peak_mailbox=0 msgs=0 names=0
+map guard, 10 known, name NOT known                        2345.7 ns/call  peak_mailbox=911 msgs=201000 names=1
+map guard, 11 known, name known (suppressed)               928.8 ns/call  peak_mailbox=0 msgs=0 names=0
+map guard, 100 known, name NOT known                       2498.8 ns/call  peak_mailbox=1178 msgs=201000 names=1
+map guard, 101 known, name known (suppressed)              808.5 ns/call  peak_mailbox=0 msgs=0 names=0
+map guard, 1000 known, name NOT known                      1479.7 ns/call  peak_mailbox=1029 msgs=201000 names=1
+map guard, 1001 known, name known (suppressed)             867.3 ns/call  peak_mailbox=0 msgs=0 names=0
+map guard, 10000 known, name NOT known                     1557.6 ns/call  peak_mailbox=531 msgs=201000 names=1
+map guard, 10001 known, name known (suppressed)            780.2 ns/call  peak_mailbox=0 msgs=0 names=0

@@ -1,0 +1,28 @@
+== call-site level (direct telemetry calls, excluding wrapper templates)
+direct non-template call sites (66): %{dynamic: 4, literal: 60, partial: 2}
+wrapper template call sites (names resolved at callers): 39
+call sites resolved through wrappers (119): %{literal: 65, partial: 54}
+call sites produced by rules (1): %{literal: 1}
+
+== effective name-decision sites: 186
+  dynamic: 4 (2.2%)
+  literal: 126 (67.7%)
+  partial: 56 (30.1%)
+
+== grep baseline vs scanner (direct call sites incl. templates) per app
+  bandit                 source=1  scanner=1
+  db_connection          source=3  scanner=3
+  demo_app               source=13  scanner=13
+  ecto                   source=1  scanner=1
+  ecto_sql               source=1  scanner=1
+  finch                  source=5  scanner=5
+  oban                   source=22  scanner=22
+  phoenix                source=13  scanner=13
+  phoenix_live_view      source=10  scanner=10
+  plug                   source=3  scanner=2
+  telemetry              source=0  scanner=1
+  telemetry_metrics      source=6  scanner=0
+  telemetry_poller       source=11  scanner=5
+  thousand_island        source=1  scanner=1
+
+scan stats: %{decoded: 48, candidates: 48, analyze_ms: 487, analyzed_modules: 62, beams: 840, decode_failed: 0, index_ms: 243, indexed: 840, total_ms: 732, wrapper_mfas: 39, wrapper_rounds: 2}

@@ -1,0 +1,152 @@
+==> tele_scope
+Compiling 4 files (.ex)
+==> demo_app
+    warning: unused require Logger
+    │
+  3 │   require Logger
+    │   ~
+    │
+    └─ lib/demo_app/instrumentation/handlers.ex:3:3
+
+static scan: 846ms, %{events: 185, patterns: 36, spans: 50, by_status: %{static_only: 170, referenced_only: 15}, by_confidence: %{resolved: 97, literal: 72, referenced: 15, configured: 1}, unresolved_patterns: 17, patterns_by_class: %{dynamic: 1, partial: 35}, wrapper_templates: 16}
+
+19:06:27.145 [error] ** (RuntimeError) boom
+    (demo_app 0.1.0) lib/demo_app_web/controllers/product_controller.ex:10: DemoAppWeb.ProductController.boom/2
+    (demo_app 0.1.0) lib/demo_app_web/controllers/product_controller.ex:1: DemoAppWeb.ProductController.action/2
+    (demo_app 0.1.0) lib/demo_app_web/controllers/product_controller.ex:1: DemoAppWeb.ProductController.phoenix_controller_pipeline/2
+    (phoenix 1.8.17) lib/phoenix/router.ex:428: Phoenix.Router.__call__/5
+    (demo_app 0.1.0) lib/demo_app_web/endpoint.ex:1: DemoAppWeb.Endpoint.plug_builder_call/2
+    (demo_app 0.1.0) deps/plug/lib/plug/debugger.ex:155: DemoAppWeb.Endpoint."call (overridable 3)"/2
+    (demo_app 0.1.0) lib/demo_app_web/endpoint.ex:1: DemoAppWeb.Endpoint.call/2
+    (phoenix 1.8.17) lib/phoenix/endpoint/sync_code_reload_plug.ex:22: Phoenix.Endpoint.SyncCodeReloadPlug.do_call/4
+    (bandit 1.15.0) lib/bandit/pipeline.ex:168: Bandit.Pipeline.call_plug!/2
+    (bandit 1.15.0) lib/bandit/pipeline.ex:44: Bandit.Pipeline.run/5
+    (bandit 1.15.0) lib/bandit/http1/handler.ex:23: Bandit.HTTP1.Handler.handle_data/3
+    (bandit 1.15.0) lib/bandit/delegating_handler.ex:18: Bandit.DelegatingHandler.handle_data/3
+    (thousand_island 1.6.0) lib/thousand_island/handler.ex:636: ThousandIsland.Handler.invoke_callback/2
+    (bandit 1.15.0) lib/bandit/delegating_handler.ex:8: Bandit.DelegatingHandler.handle_info/2
+    (stdlib 8.0) gen_server.erl:2434: :gen_server.try_handle_info/3
+    (stdlib 8.0) gen_server.erl:2420: :gen_server.handle_msg/3
+    (stdlib 8.0) proc_lib.erl:333: :proc_lib.init_p_do_apply/3
+
+
+19:06:27.157 [error] Handler "demo-app-crasher" has failed and has been detached. Class=:error
+Reason=%RuntimeError{message: "handler bug"}
+Stacktrace=[
+  {DemoApp.Instrumentation.Handlers, :crash, 4,
+   [
+     file: ~c"lib/demo_app/instrumentation/handlers.ex",
+     line: 33,
+     error_info: %{module: Exception}
+   ]},
+  {:telemetry, :do_execute, 4,
+   [
+     file: ~c"/home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry/src/telemetry.erl",
+     line: 220
+   ]},
+  {:elixir_compiler_7, :"-__FILE__/1-fun-9-", 2,
+   [file: ~c"priv/spike/run_spike.exs", line: 63]},
+  {Enum, :"-reduce/3-lists^foldl/2-0-", 3, [file: ~c"lib/enum.ex", line: 2622]},
+  {:elixir_compiler_7, :__FILE__, 1,
+   [file: ~c"priv/spike/run_spike.exs", line: 63]},
+  {:elixir_compiler, :dispatch, 4,
+   [file: ~c"src/elixir_compiler.erl", line: 102]},
+  {:elixir_compiler, :compile, 4, [file: ~c"src/elixir_compiler.erl", line: 76]},
+  {:elixir_compiler, :optimize_defmodule, 2,
+   [file: ~c"src/elixir_compiler.erl", line: 42]},
+  {:elixir_lexical, :run, 3, [file: ~c"src/elixir_lexical.erl", line: 18]},
+  {:elixir_compiler, :quoted, 3, [file: ~c"src/elixir_compiler.erl", line: 21]},
+  {Module.ParallelChecker, :verify, 1,
+   [file: ~c"lib/module/parallel_checker.ex", line: 156]},
+  {Code, :require_file, 2, [file: ~c"lib/code.ex", line: 1639]},
+  {Mix.Tasks.Run, :run, 5, [file: ~c"lib/mix/tasks/run.ex", line: 167]},
+  {Mix.Tasks.Run, :run, 1, [file: ~c"lib/mix/tasks/run.ex", line: 106]},
+  {Mix.Task, :"-run_task/5-fun-3-", 3, [file: ~c"lib/mix/task.ex", line: 502]},
+  {Mix.CLI, :run_task, 2, [file: ~c"lib/mix/cli.ex", line: 129]},
+  {:elixir_compiler_0, :__FILE__, 1,
+   [file: ~c"/home/hata/.asdf/installs/elixir/1.20.1-otp-29/bin/mix", line: 7]},
+  {:elixir_compiler, :dispatch, 4,
+   [file: ~c"src/elixir_compiler.erl", line: 102]},
+  {:elixir_compiler, :compile, 4, [file: ~c"src/elixir_compiler.erl", line: 76]},
+  {:elixir_compiler, :optimize_defmodule, 2,
+   [file: ~c"src/elixir_compiler.erl", line: 42]}
+]
+
+coverage: %{
+  tracer: %{
+    messages: 234,
+    status: :stopped,
+    otp_release: "29",
+    started_at: 1795280784810,
+    warnings: [],
+    finished_at: 1795280787840,
+    backend: :session,
+    pattern_updates: 24,
+    peak_mailbox: 0,
+    skipped_processes: 0,
+    invalid_calls: 0
+  },
+  otp: "29",
+  elixir: "1.20.1",
+  observer: %{
+    status: :stopped,
+    started_at: 1795280784795,
+    sample_rate: 1.0,
+    finished_at: 1795280787856,
+    total_events: 782,
+    recorded_events: 782,
+    dropped_events: 0,
+    callback_errors: 0,
+    ets_rows: 308,
+    ets_memory_bytes: 103480,
+    handler_failures: [
+      %{
+        count: 1,
+        kind: :error,
+        event: [:demo_app, :cache, :miss],
+        handler_id: "demo-app-crasher"
+      }
+    ]
+  },
+  static_scan_ms: 846,
+  static_summary: %{
+    events: 185,
+    patterns: 36,
+    spans: 50,
+    by_status: %{static_only: 170, referenced_only: 15},
+    by_confidence: %{resolved: 97, literal: 72, referenced: 15, configured: 1},
+    unresolved_patterns: 17,
+    patterns_by_class: %{dynamic: 1, partial: 35},
+    wrapper_templates: 16
+  },
+  predicted_emittable_names: 170,
+  fired_names: 79,
+  fired_and_predicted: 66,
+  recall_percent: 83.5,
+  fired_predicted_by_source: %{
+    static_literal: 32,
+    static_resolved: 33,
+    config_rule: 1
+  },
+  fired_not_predicted: ["bandit.request.exception", "bandit.request.stop",
+   "demo_app.cache.evict", "demo_app.cache.hit", "demo_app.cache.miss",
+   "demo_app.dynamic.alpha", "demo_app.dynamic.beta", "demo_app.search.query",
+   "thousand_island.connection.async_recv", "thousand_island.connection.ready",
+   "thousand_island.connection.recv", "thousand_island.connection.send",
+   "thousand_island.connection.stop"],
+  fired_not_predicted_but_matching_partial_pattern: ["bandit.request.exception",
+   "bandit.request.stop", "demo_app.cache.evict", "demo_app.cache.hit",
+   "demo_app.cache.miss", "demo_app.search.query",
+   "thousand_island.connection.async_recv", "thousand_island.connection.ready",
+   "thousand_island.connection.recv", "thousand_island.connection.send",
+   "thousand_island.connection.stop"],
+  predicted_but_not_fired: 104
+}
+
+Diagnostics (non-info):
+  [error] handler_failure: Handler "demo-app-crasher" raised (:error) 1 time(s) and was detached by :telemetry
+  [warning] consumer_without_emitter: [:demo_app, :order, :created] is consumed by metric demo_app.order.created.count (lib/demo_app_web/telemetry.ex:81), handler "demo-app-typo" (lib/demo_app/instrumentation/handlers.ex:21), runtime handler "demo-app-typo" but no emitter found in scanned code; did you mean [:demo_app, :orders, :created]?
+  [warning] metric_measurement_missing: Metric demo_app.orders.created.total_amount reads measurement :total_amount which was never observed on [:demo_app, :orders, :created] (seen: :count, :total_cents)
+  [warning] sensitive_key: [:demo_app, :orders, :created] metadata contains a key named :password_hint; make sure reporters/loggers attached to this event do not export its value
+
+reports written to /home/hata/private_projects/tele_scope/spike/results

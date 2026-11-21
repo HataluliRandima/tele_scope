@@ -1,0 +1,15 @@
+===> Failed to restore /home/hata/private_projects/tele_scope/deps/telemetry/_build/prod/lib/.rebar3/rebar_compiler_erl/source.dag file. Discarding it.
+
+===> Analyzing applications...
+===> Compiling telemetry
+Compiling 24 files (.ex)
+Generated tele_scope app
+OTP 27 backend=session
+metadata                no-trace   suppressed   delta
+empty map                  273 ns     1722 ns  +1449 ns
+4 keys                     283 ns     1610 ns  +1327 ns
+30 small int keys          146 ns      858 ns  +712 ns
+40 keys (HAMT)             149 ns      965 ns  +816 ns
+10KB binary                155 ns      832 ns  +678 ns
+100-element list           181 ns      893 ns  +712 ns
+1000-element list          165 ns      722 ns  +557 ns
