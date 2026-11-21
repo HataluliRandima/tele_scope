@@ -44,6 +44,20 @@ defmodule TeleScope.Runtime.Capture do
   @impl true
   def init(opts) do
     opts = Keyword.merge(@defaults, opts)
+
+    with :ok <- validate(opts) do
+      do_init(opts)
+    end
+  end
+
+  defp validate(opts) do
+    case opts[:duration] do
+      d when is_integer(d) and d > 0 -> :ok
+      other -> {:stop, {:invalid_option, {:duration, other}}}
+    end
+  end
+
+  defp do_init(opts) do
     Process.flag(:trap_exit, true)
     duration = opts[:duration]
     owner_ref = Process.monitor(opts[:owner])
@@ -62,6 +76,8 @@ defmodule TeleScope.Runtime.Capture do
        %{
          opts: opts,
          observer: observer,
+         observer_ref: Process.monitor(observer),
+         observer_error: nil,
          tracer: tracer,
          tracker: tracker,
          handlers_before: handlers,
@@ -78,11 +94,19 @@ defmodule TeleScope.Runtime.Capture do
 
   defp maybe_tracer(opts, events, duration) do
     if opts[:trace] do
+      # the capture stops the tracer itself; the tracer's own time box is a
+      # safety net slightly longer than the capture, never above its maximum
+      # unless the caller explicitly allows long traces
+      tracer_opts = opts[:tracer]
+      max = Keyword.get(tracer_opts, :max_duration, 600_000)
+
+      safety_net =
+        if Keyword.get(tracer_opts, :allow_long, false),
+          do: duration + 1_000,
+          else: min(duration + 1_000, max(duration, max))
+
       Tracer.start(
-        Keyword.merge(
-          [known: events, notify: self(), duration: duration + 1_000],
-          opts[:tracer]
-        )
+        Keyword.merge([known: events, notify: self(), duration: safety_net], tracer_opts)
       )
     else
       {:ok, nil}
@@ -91,8 +115,20 @@ defmodule TeleScope.Runtime.Capture do
 
   @impl true
   def handle_info({:telescope_tracer, :new_names, names}, state) do
-    if state.result == nil, do: Observer.attach(state.observer, names)
+    if state.result == nil and state.observer_error == nil do
+      # never let an observer failure take the capture down (audit R4)
+      try do
+        Observer.attach(state.observer, names)
+      catch
+        :exit, _ -> :ok
+      end
+    end
+
     {:noreply, state}
+  end
+
+  def handle_info({:DOWN, ref, :process, _, reason}, %{observer_ref: ref, result: nil} = state) do
+    {:noreply, %{state | observer_error: reason}}
   end
 
   def handle_info(:finish, state), do: {:noreply, finish(state)}
@@ -141,7 +177,12 @@ defmodule TeleScope.Runtime.Capture do
     state = %{state | tracker: tracker}
     invocations = if state.tracker, do: Handlers.invocation_counts(state.tracker)
     if state.tracker, do: Handlers.stop_tracking(state.tracker)
-    observations = Observer.stop(state.observer)
+
+    observations =
+      case state.observer_error == nil && Observer.stop(state.observer) do
+        %{} = obs -> obs
+        _ -> crashed_observations(state.observer_error || :not_running, state.started_at)
+      end
 
     result = %{
       started_at: state.started_at,
@@ -162,4 +203,25 @@ defmodule TeleScope.Runtime.Capture do
   end
 
   defp finish(state), do: state
+
+  # Same shape as Observer.snapshot/1, so downstream code never has to
+  # special-case a crashed observer (audit R3).
+  defp crashed_observations(reason, started_at) do
+    %{
+      status: :crashed,
+      error: inspect(reason),
+      started_at: started_at,
+      finished_at: System.system_time(:millisecond),
+      sample_rate: 1.0,
+      attached_events: [],
+      total_events: 0,
+      recorded_events: 0,
+      dropped_events: 0,
+      callback_errors: 0,
+      ets_rows: 0,
+      ets_memory_bytes: 0,
+      events: %{},
+      handler_failures: []
+    }
+  end
 end

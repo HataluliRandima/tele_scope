@@ -143,7 +143,7 @@ defmodule TeleScope.Reporters.JSON do
 
   def encode(other), do: string(inspect(other))
 
-  defp key(k) when is_binary(k), do: k
+  defp key(k) when is_binary(k), do: if(String.valid?(k), do: k, else: inspect(k))
   defp key(k) when is_atom(k), do: module_or_atom(k)
   defp key(k), do: inspect(k)
 

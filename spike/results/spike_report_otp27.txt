@@ -1,7 +1,7 @@
 TeleScope report
 ================
-static:  840 beams indexed, 48 decoded, 631ms
-runtime: 20000ms capture, 825 events observed, tracer session stopped, 238 msgs, peak mailbox 0
+static:  840 beams indexed, 48 decoded, 564ms
+runtime: 20000ms capture, 827 events observed, tracer session stopped, 230 msgs, peak mailbox 16
 events:  190 %{observed: 80, not_observed: 103, referenced_only: 7}
 confidence: %{resolved: 64, literal: 39, observed: 80, referenced: 7}
 unresolved call-site patterns: 9 of 36
@@ -12,10 +12,10 @@ bandit.request.start                                observed        observed    
     at lib/bandit/pipeline.ex:40 ({:wrapper, {Bandit.Telemetry, :start_span, 3}, 242})
     at lib/bandit/pipeline.ex:63 ({:wrapper, {Bandit.Telemetry, :start_span, 3}, 242})
     measurements: monotonic_time: integer
-    metadata: plug: tuple, telemetry_span_context: reference, conn: %Plug.Conn{}, connection_telemetry_span_context: reference
+    metadata: plug: tuple, conn: %Plug.Conn{}, telemetry_span_context: reference, connection_telemetry_span_context: reference
 bandit.request.stop                                 observed        observed    22      handlers=0
     measurements: monotonic_time: integer, duration: integer, req_header_end_time: integer, resp_start_time: integer, resp_body_bytes: integer, resp_end_time: integer
-    metadata: plug: tuple, telemetry_span_context: reference, conn: %Plug.Conn{}, connection_telemetry_span_context: reference
+    metadata: plug: tuple, conn: %Plug.Conn{}, telemetry_span_context: reference, connection_telemetry_span_context: reference
 bandit.websocket.start                              not_observed    resolved    -       handlers=0
     at lib/bandit/websocket/connection.ex:59 ({:wrapper, {Bandit.Telemetry, :start_span, 3}, 242})
 bandit.websocket.stop                               referenced_only referenced  -       handlers=0
@@ -26,33 +26,34 @@ db_connection.connection_error                      not_observed    literal     
 db_connection.disconnected                          not_observed    literal     -       handlers=0
     at lib/db_connection/telemetry_listener.ex:112 (:direct)
 demo_app.cache.evict                                observed        observed    1       handlers=0
-demo_app.cache.hit                                  observed        observed    1       handlers=0
+demo_app.cache.hit                                  observed        observed    2       handlers=0
+    metadata: key_type: atom 50%
 demo_app.cache.miss                                 observed        observed    1       handlers=0
 demo_app.checkout.exception                         not_observed    literal     -       handlers=0
     at lib/demo_app/instrumentation/orders.ex:71 (:direct)
 demo_app.checkout.start                             observed        observed    8       handlers=0
     at lib/demo_app/instrumentation/orders.ex:71 (:direct)
     measurements: monotonic_time: integer, system_time: integer
-    metadata: telemetry_span_context: reference, order_id: integer
+    metadata: order_id: integer, telemetry_span_context: reference
 demo_app.checkout.stop                              observed        observed    8       handlers=1
     at lib/demo_app/instrumentation/orders.ex:71 (:direct)
     measurements: monotonic_time: integer, duration: integer
-    metadata: items: integer, telemetry_span_context: reference, order_id: integer
+    metadata: items: integer, order_id: integer, telemetry_span_context: reference
     handler "demo-app-orders" invocations=24 (function shared with ["demo-app-typo"]; not attributable)
 demo_app.dynamic.alpha                              observed        observed    1       handlers=0
 demo_app.dynamic.beta                               observed        observed    1       handlers=0
 demo_app.fulfilment.exception                       observed        observed    1       handlers=0
     at lib/demo_app/instrumentation/orders.ex:78 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :span, 3}, 17})
     measurements: monotonic_time: integer, duration: integer
-    metadata: reason: %RuntimeError{}, stacktrace: list, kind: atom, telemetry_span_context: reference, order_id: integer
+    metadata: reason: %RuntimeError{}, stacktrace: list, kind: atom, order_id: integer, telemetry_span_context: reference
 demo_app.fulfilment.start                           observed        observed    6       handlers=0
     at lib/demo_app/instrumentation/orders.ex:78 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :span, 3}, 17})
     measurements: monotonic_time: integer, system_time: integer
-    metadata: telemetry_span_context: reference, order_id: integer
+    metadata: order_id: integer, telemetry_span_context: reference
 demo_app.fulfilment.stop                            observed        observed    5       handlers=0
     at lib/demo_app/instrumentation/orders.ex:78 ({:wrapper, {DemoApp.Instrumentation.Telemetry, :span, 3}, 17})
     measurements: monotonic_time: integer, duration: integer
-    metadata: telemetry_span_context: reference, order_id: integer
+    metadata: order_id: integer, telemetry_span_context: reference
 demo_app.order.created                              referenced_only referenced  -       handlers=1
     handler "demo-app-typo" invocations=24 (function shared with ["demo-app-orders"]; not attributable)
 demo_app.orders.audited                             observed        observed    1       handlers=0
@@ -265,11 +266,11 @@ oban.engine.insert_job.exception                    not_observed    resolved    
 oban.engine.insert_job.start                        observed        observed    5       handlers=0
     at lib/oban/engine.ex:215 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
     measurements: monotonic_time: integer, system_time: integer
-    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, changeset: %Ecto.Changeset{}
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, changeset: %Ecto.Changeset{}, telemetry_span_context: reference
 oban.engine.insert_job.stop                         observed        observed    5       handlers=0
     at lib/oban/engine.ex:215 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
     measurements: monotonic_time: integer, duration: integer
-    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, changeset: %Ecto.Changeset{}, job: %Oban.Job{}
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, changeset: %Ecto.Changeset{}, telemetry_span_context: reference, job: %Oban.Job{}
 oban.engine.prune_jobs.exception                    not_observed    resolved    -       handlers=0
     at lib/oban/engine.ex:277 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
 oban.engine.prune_jobs.start                        not_observed    resolved    -       handlers=0
@@ -323,11 +324,11 @@ oban.engine.stage_jobs.exception                    not_observed    resolved    
 oban.engine.stage_jobs.start                        observed        observed    5       handlers=0
     at lib/oban/engine.ex:267 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
     measurements: monotonic_time: integer, system_time: integer
-    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, queryable: atom|module
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, queryable: atom|module, telemetry_span_context: reference
 oban.engine.stage_jobs.stop                         observed        observed    5       handlers=0
     at lib/oban/engine.ex:267 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
     measurements: monotonic_time: integer, duration: integer
-    metadata: opts: list, conf: %Oban.Config{}, engine: module, telemetry_span_context: reference, queryable: module, jobs: list
+    metadata: opts: list, conf: %Oban.Config{}, engine: module, queryable: module, telemetry_span_context: reference, jobs: list
 oban.engine.update_job.exception                    not_observed    resolved    -       handlers=0
     at lib/oban/engine.ex:387 ({:wrapper, {Oban.Engine, :with_span, 4}, 401})
 oban.engine.update_job.start                        not_observed    resolved    -       handlers=0
@@ -339,52 +340,52 @@ oban.job.exception                                  not_observed    literal     
 oban.job.start                                      observed        observed    5       handlers=0
     at lib/oban/queues/executor.ex:97 (:direct)
     measurements: system_time: integer
-    metadata: args: map, id: integer, max_attempts: integer, queue: binary, worker: binary, prefix: boolean, conf: %Oban.Config{}, tags: list, attempt: integer, job: %Oban.Job{}
+    metadata: args: map, id: integer, max_attempts: integer, queue: binary, worker: binary, prefix: boolean, conf: %Oban.Config{}, attempt: integer, tags: list, job: %Oban.Job{}
 oban.job.stop                                       observed        observed    5       handlers=0
     at lib/oban/queues/executor.ex:299 (:direct)
     measurements: memory: integer, reductions: integer, duration: integer, queue_time: integer
-    metadata: args: map, id: integer, state: atom, max_attempts: integer, queue: binary, worker: binary, prefix: boolean, result: atom, conf: %Oban.Config{}, tags: list, attempt: integer, job: %Oban.Job{}
+    metadata: args: map, id: integer, state: atom, max_attempts: integer, queue: binary, worker: binary, prefix: boolean, result: atom, conf: %Oban.Config{}, attempt: integer, tags: list, job: %Oban.Job{}
 oban.notifier.notify.exception                      not_observed    literal     -       handlers=0
     at lib/oban/notifier.ex:217 (:direct)
 oban.notifier.notify.start                          observed        observed    12      handlers=0
     at lib/oban/notifier.ex:217 (:direct)
     measurements: monotonic_time: integer, system_time: integer
-    metadata: conf: %Oban.Config{}, telemetry_span_context: reference, payload: list|map, channel: atom
+    metadata: conf: %Oban.Config{}, payload: list|map, telemetry_span_context: reference, channel: atom
 oban.notifier.notify.stop                           observed        observed    12      handlers=0
     at lib/oban/notifier.ex:217 (:direct)
     measurements: monotonic_time: integer, duration: integer
-    metadata: conf: %Oban.Config{}, telemetry_span_context: reference, payload: list|map, channel: atom
+    metadata: conf: %Oban.Config{}, payload: list|map, telemetry_span_context: reference, channel: atom
 oban.notifier.switch                                observed        observed    1       handlers=0
     at lib/oban/sonar.ex:164 (:direct)
     metadata: status: atom, conf: %Oban.Config{}
 oban.peer.election.exception                        not_observed    literal     -       handlers=0
-    at lib/oban/peers/database.ex:99 (:direct)
     at lib/oban/peers/global.ex:96 (:direct)
+    at lib/oban/peers/database.ex:99 (:direct)
 oban.peer.election.start                            not_observed    literal     -       handlers=0
-    at lib/oban/peers/database.ex:99 (:direct)
     at lib/oban/peers/global.ex:96 (:direct)
+    at lib/oban/peers/database.ex:99 (:direct)
 oban.peer.election.stop                             not_observed    literal     -       handlers=0
-    at lib/oban/peers/database.ex:99 (:direct)
     at lib/oban/peers/global.ex:96 (:direct)
+    at lib/oban/peers/database.ex:99 (:direct)
 oban.plugin.exception                               not_observed    literal     -       handlers=0
-    at lib/oban/lifeline.ex:134 (:direct)
-    at lib/oban/pruner.ex:132 (:direct)
     at lib/oban/stager.ex:66 (:direct)
+    at lib/oban/lifeline.ex:134 (:direct)
+    at lib/oban/reindexer.ex:113 (:direct)
 oban.plugin.init                                    observed        observed    2       handlers=0
-    at lib/oban/lifeline.ex:118 (:direct)
-    at lib/oban/pruner.ex:116 (:direct)
     at lib/oban/stager.ex:49 (:direct)
+    at lib/oban/lifeline.ex:118 (:direct)
+    at lib/oban/reindexer.ex:102 (:direct)
     metadata: conf: %Oban.Config{}, plugin: module
 oban.plugin.start                                   observed        observed    5       handlers=0
-    at lib/oban/lifeline.ex:134 (:direct)
-    at lib/oban/pruner.ex:132 (:direct)
     at lib/oban/stager.ex:66 (:direct)
+    at lib/oban/lifeline.ex:134 (:direct)
+    at lib/oban/reindexer.ex:113 (:direct)
     measurements: monotonic_time: integer, system_time: integer
     metadata: conf: %Oban.Config{}, telemetry_span_context: reference, plugin: module, leader: boolean
 oban.plugin.stop                                    observed        observed    5       handlers=0
-    at lib/oban/lifeline.ex:134 (:direct)
-    at lib/oban/pruner.ex:132 (:direct)
     at lib/oban/stager.ex:66 (:direct)
+    at lib/oban/lifeline.ex:134 (:direct)
+    at lib/oban/reindexer.ex:113 (:direct)
     measurements: monotonic_time: integer, duration: integer
     metadata: conf: %Oban.Config{}, telemetry_span_context: reference, plugin: module, leader: boolean, staged_count: integer, staged_jobs: list
 oban.producer.exception                             not_observed    literal     -       handlers=0
@@ -488,14 +489,14 @@ phoenix.live_view.mount.stop                        not_observed    literal     
     at lib/phoenix_live_view/utils.ex:350 (:direct)
     handler {Phoenix.LiveView.Logger, [:phoenix, :live_view, :mount, :stop]} invocations=0
 phoenix.live_view.render.exception                  not_observed    literal     -       handlers=0
-    at lib/phoenix_live_view/channel.ex:1118 (:direct)
     at lib/phoenix_live_view/diff.ex:260 (:direct)
+    at lib/phoenix_live_view/channel.ex:1118 (:direct)
 phoenix.live_view.render.start                      not_observed    literal     -       handlers=0
-    at lib/phoenix_live_view/channel.ex:1118 (:direct)
     at lib/phoenix_live_view/diff.ex:260 (:direct)
+    at lib/phoenix_live_view/channel.ex:1118 (:direct)
 phoenix.live_view.render.stop                       not_observed    literal     -       handlers=0
-    at lib/phoenix_live_view/channel.ex:1118 (:direct)
     at lib/phoenix_live_view/diff.ex:260 (:direct)
+    at lib/phoenix_live_view/channel.ex:1118 (:direct)
 phoenix.router_dispatch.exception                   observed        observed    1       handlers=0
     at lib/phoenix/router.ex:440 (:direct)
     at lib/phoenix/router.ex:447 (:direct)
@@ -539,16 +540,16 @@ thousand_island.connection.sendfile                 referenced_only referenced  
 thousand_island.connection.sendfile_error           referenced_only referenced  -       handlers=0
 thousand_island.connection.socket_shutdown          referenced_only referenced  -       handlers=0
 thousand_island.connection.start                    observed        observed    1       handlers=0
-    at lib/bandit/websocket/handler.ex:5 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
-    at lib/bandit/http2/handler.ex:10 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
     at lib/bandit/delegating_handler.ex:8 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
+    at lib/bandit/initial_handler.ex:7 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
+    at lib/bandit/http1/handler.ex:5 ({:wrapper, {ThousandIsland.Telemetry, :start_child_span, 4}, 504})
     measurements: monotonic_time: integer, system_time: integer
-    metadata: handler: module, telemetry_span_context: reference, remote_address: tuple, remote_port: integer, parent_telemetry_span_context: reference
+    metadata: handler: module, remote_address: tuple, remote_port: integer, telemetry_span_context: reference, parent_telemetry_span_context: reference
 thousand_island.connection.stop                     observed        observed    1       handlers=0
 thousand_island.listener.start                      observed        observed    1       handlers=0
     at lib/thousand_island/listener.ex:41 ({:wrapper, {ThousandIsland.Telemetry, :start_span, 3}, 504})
     measurements: monotonic_time: integer, system_time: integer
-    metadata: handler: atom, local_address: tuple, telemetry_span_context: reference, transport_module: module, transport_options: list, local_port: integer
+    metadata: handler: atom, local_address: tuple, transport_module: module, telemetry_span_context: reference, transport_options: list, local_port: integer
 vm.memory                                           observed        observed    2       handlers=0
     at /home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry_poller/src/telemetry_poller_builtin.erl:26 (:direct)
     measurements: atom: integer, atom_used: integer, binary: integer, code: integer, ets: integer, processes: integer, processes_used: integer, system: integer, total: integer
@@ -585,10 +586,10 @@ Non-literal call sites (36)
   [:thousand_island, **]                   partial   matches 8 name(s)      lib/thousand_island/telemetry.ex:504
   [:thousand_island, *, *]                 partial   matches 8 name(s)      lib/thousand_island/telemetry.ex:482
   [:thousand_island, *, :accept_error]     partial   UNRESOLVED             lib/thousand_island/acceptor.ex:135
-  [:thousand_island, *, :async_recv]       partial   matches 1 name(s)      lib/bandit/websocket/handler.ex:5
+  [:thousand_island, *, :async_recv]       partial   matches 1 name(s)      lib/bandit/delegating_handler.ex:8
   [:thousand_island, *, :emfile]           partial   UNRESOLVED             lib/thousand_island/acceptor.ex:152
   [:thousand_island, *, :exception]        partial   UNRESOLVED             lib/thousand_island/telemetry.ex:476
-  [:thousand_island, *, :ready]            partial   matches 1 name(s)      lib/bandit/websocket/handler.ex:5
+  [:thousand_island, *, :ready]            partial   matches 1 name(s)      lib/bandit/delegating_handler.ex:8
   [:thousand_island, *, :recv]             partial   matches 1 name(s)      lib/thousand_island/socket.ex:122
   [:thousand_island, *, :recv_error]       partial   UNRESOLVED             lib/thousand_island/socket.ex:126
   [:thousand_island, *, :send]             partial   matches 1 name(s)      lib/thousand_island/socket.ex:138
@@ -608,7 +609,7 @@ Diagnostics
   [info] consumer_without_emitter: [:bandit, :websocket, :stop] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:bandit, *, :stop]
   [info] consumer_without_emitter: [:thousand_island, :connection, :recv_error] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :recv_error]
   [info] consumer_without_emitter: [:thousand_island, :connection, :send_error] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :send_error]
-  [info] consumer_without_emitter: [:thousand_island, :connection, :sendfile] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, :sendfile], [:thousand_island, *, *]
+  [info] consumer_without_emitter: [:thousand_island, :connection, :sendfile] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :sendfile]
   [info] consumer_without_emitter: [:thousand_island, :connection, :sendfile_error] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :sendfile_error]
   [info] consumer_without_emitter: [:thousand_island, :connection, :socket_shutdown] is consumed by handler :unknown (lib/bandit/trace.ex:84) but may be emitted by a dynamic call site matching [:thousand_island, *, *], [:thousand_island, *, :socket_shutdown]
   [info] inactive_handler: Handler "demo-app-refund" on [:demo_app, :payment, :refunded] was not invoked during the capture window
@@ -789,6 +790,7 @@ Diagnostics
   [info] no_runtime_handler: [:vm, :persistent_term] has no handler attached at runtime (not necessarily a problem)
   [info] no_runtime_handler: [:vm, :system_counts] has no handler attached at runtime (not necessarily a problem)
   [info] no_runtime_handler: [:vm, :total_run_queue_lengths] has no handler attached at runtime (not necessarily a problem)
+  [info] schema_drift: [:demo_app, :cache, :hit] metadata.key_type: present in 50.0% of events
   [info] schema_drift: [:demo_app, :orders, :created] metadata.coupon: nullable (:binary or nil)
   [info] schema_drift: [:demo_app, :repo, :query] measurements.decode_time: present in 91.2% of events
   [info] schema_drift: [:demo_app, :repo, :query] measurements.idle_time: present in 86.7% of events
@@ -802,15 +804,15 @@ Diagnostics
   [info] schema_drift: [:oban, :notifier, :notify, :start] metadata.payload: multiple types [:list, :map]
   [info] schema_drift: [:oban, :notifier, :notify, :stop] metadata.payload: multiple types [:list, :map]
   [info] schema_drift: [:phoenix, :router_dispatch, :start] metadata.plug: multiple types [:atom, :module]
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :accept_error] at lib/thousand_island/acceptor.ex:135 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :spawn_error] at lib/thousand_island/acceptor.ex:73, lib/thousand_island/acceptor.ex:90, lib/thousand_island/acceptor.ex:105 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :exception] at lib/thousand_island/telemetry.ex:476 could not be resolved statically; a runtime capture can discover the concrete names
+  [info] unresolved_call_site: partial event name [:thousand_island, *, :socket_shutdown] at lib/thousand_island/socket.ex:172 could not be resolved statically; a runtime capture can discover the concrete names
   [info] unresolved_call_site: partial event name [:thousand_island, *, :sendfile] at lib/thousand_island/socket.ex:157 could not be resolved statically; a runtime capture can discover the concrete names
   [info] unresolved_call_site: partial event name [:thousand_island, *, :emfile] at lib/thousand_island/acceptor.ex:152 could not be resolved statically; a runtime capture can discover the concrete names
-  [info] unresolved_call_site: partial event name [:thousand_island, *, :socket_shutdown] at lib/thousand_island/socket.ex:172 could not be resolved statically; a runtime capture can discover the concrete names
   [info] unresolved_call_site: partial event name [:thousand_island, *, :sendfile_error] at lib/thousand_island/socket.ex:162 could not be resolved statically; a runtime capture can discover the concrete names
-  [info] unresolved_call_site: partial event name [:thousand_island, *, :exception] at lib/thousand_island/telemetry.ex:476 could not be resolved statically; a runtime capture can discover the concrete names
-  [info] unresolved_call_site: partial event name [:thousand_island, *, :spawn_error] at lib/thousand_island/acceptor.ex:73, lib/thousand_island/acceptor.ex:90, lib/thousand_island/acceptor.ex:105 could not be resolved statically; a runtime capture can discover the concrete names
   [info] unresolved_call_site: partial event name [:thousand_island, *, :send_error] at lib/thousand_island/socket.ex:142 could not be resolved statically; a runtime capture can discover the concrete names
   [info] unresolved_call_site: partial event name [:thousand_island, *, :recv_error] at lib/thousand_island/socket.ex:126 could not be resolved statically; a runtime capture can discover the concrete names
-  [info] unresolved_call_site: partial event name [:thousand_island, *, :accept_error] at lib/thousand_island/acceptor.ex:135 could not be resolved statically; a runtime capture can discover the concrete names
 
 # ---------------------------------------------------------------------------
 # TeleScope metric SUGGESTIONS - generated 2026-11-21

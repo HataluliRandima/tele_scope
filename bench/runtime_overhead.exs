@@ -34,8 +34,13 @@ defmodule Bench do
 
   # minimum of R runs: on a shared/noisy machine (WSL2 here) the minimum is
   # the most reproducible estimate of the intrinsic cost (see BENCHMARKS.md)
+  # Returns min / median / max of R runs. The minimum is the most reproducible
+  # estimate of intrinsic cost on a noisy machine, but it is a best case: the
+  # median is reported next to it (pre-release audit: reporting only the
+  # minimum understated typical overhead).
   def median_of(fun) do
-    1..@runs |> Enum.map(fn _ -> fun.() end) |> Enum.min()
+    runs = 1..@runs |> Enum.map(fn _ -> fun.() end) |> Enum.sort()
+    %{min: hd(runs), med: Enum.at(runs, div(@runs, 2)), max: List.last(runs)}
   end
 
   def concurrent(event, md, procs) do
@@ -68,12 +73,13 @@ defmodule Bench do
   def handle(_, _, _, _), do: :ok
 
   def row(label, ns, base) do
-    over = ns - base
+    f = &:erlang.float_to_binary(&1 * 1.0, decimals: 0)
 
     IO.puts(
-      String.pad_trailing(label, 62) <>
-        String.pad_leading(:erlang.float_to_binary(ns, decimals: 0), 7) <>
-        " ns   +" <> String.pad_leading(:erlang.float_to_binary(over, decimals: 0), 6) <> " ns"
+      String.pad_trailing(label, 60) <>
+        " min #{String.pad_leading(f.(ns.min), 6)} (+#{String.pad_leading(f.(ns.min - base.min), 5)})" <>
+        "  median #{String.pad_leading(f.(ns.med), 6)} (+#{String.pad_leading(f.(ns.med - base.med), 5)})" <>
+        "  max #{String.pad_leading(f.(ns.max), 6)} ns"
     )
   end
 end

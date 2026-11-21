@@ -1,10 +1,11 @@
 Resolving Hex dependencies...
 Resolution completed in 0.039s
 All dependencies are up to date
-Running ExUnit with seed: 124717, max_cases: 24
+Compiling 2 files (.ex)
+Running ExUnit with seed: 532193, max_cases: 24
 Excluding tags: [:bench]
 Including tags: [:peer]
 
-.........................................................................................
-Finished in 6.3 seconds (1.2s async, 5.1s sync)
-2 doctests, 87 tests, 0 failures
+....................................................................................................
+Finished in 5.1 seconds (0.8s async, 4.3s sync)
+2 doctests, 98 tests, 0 failures

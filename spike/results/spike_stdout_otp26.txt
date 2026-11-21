@@ -1,8 +1,8 @@
 ==> tele_scope
-Compiling 4 files (.ex)
-static scan: 615ms, %{events: 185, unresolved_patterns: 17, patterns: 36, spans: 50, by_status: %{static_only: 170, referenced_only: 15}, by_confidence: %{resolved: 97, literal: 72, referenced: 15, configured: 1}, patterns_by_class: %{dynamic: 1, partial: 35}, wrapper_templates: 16}
+Compiling 1 file (.ex)
+static scan: 888ms, %{events: 185, unresolved_patterns: 17, patterns: 36, spans: 50, by_confidence: %{resolved: 97, literal: 72, referenced: 15, configured: 1}, by_status: %{static_only: 170, referenced_only: 15}, patterns_by_class: %{dynamic: 1, partial: 35}, wrapper_templates: 16}
 
-19:09:05.927 [error] ** (RuntimeError) boom
+20:37:10.748 [error] ** (RuntimeError) boom
     (demo_app 0.1.0) lib/demo_app_web/controllers/product_controller.ex:10: DemoAppWeb.ProductController.boom/2
     (demo_app 0.1.0) lib/demo_app_web/controllers/product_controller.ex:1: DemoAppWeb.ProductController.action/2
     (demo_app 0.1.0) lib/demo_app_web/controllers/product_controller.ex:1: DemoAppWeb.ProductController.phoenix_controller_pipeline/2
@@ -22,7 +22,7 @@ static scan: 615ms, %{events: 185, unresolved_patterns: 17, patterns: 36, spans:
     (stdlib 5.1.1) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
 
 
-19:09:05.951 [error] Handler "demo-app-crasher" has failed and has been detached. Class=:error
+20:37:10.770 [error] Handler "demo-app-crasher" has failed and has been detached. Class=:error
 Reason=%RuntimeError{message: "handler bug"}
 Stacktrace=[
   {DemoApp.Instrumentation.Handlers, :crash, 4,
@@ -36,10 +36,10 @@ Stacktrace=[
      file: ~c"/home/hata/private_projects/tele_scope/spike/demo_app/deps/telemetry/src/telemetry.erl",
      line: 220
    ]},
-  {:elixir_compiler_6, :"-__FILE__/1-fun-9-", 2,
+  {:elixir_compiler_3, :"-__FILE__/1-fun-9-", 2,
    [file: ~c"priv/spike/run_spike.exs", line: 63]},
   {Enum, :"-reduce/3-lists^foldl/2-0-", 3, [file: ~c"lib/enum.ex", line: 2531]},
-  {:elixir_compiler_6, :__FILE__, 1,
+  {:elixir_compiler_3, :__FILE__, 1,
    [file: ~c"priv/spike/run_spike.exs", line: 63]},
   {:elixir_compiler, :dispatch, 4,
    [file: ~c"src/elixir_compiler.erl", line: 77]},
@@ -66,15 +66,17 @@ Stacktrace=[
 
 coverage: %{
   tracer: %{
-    messages: 237,
+    messages: 232,
     status: :stopped,
     otp_release: "26",
-    started_at: 1795280939595,
+    started_at: 1795286223881,
     warnings: [],
+    finished_at: 1795286231562,
     backend: :legacy,
-    pattern_updates: 24,
-    finished_at: 1795280946663,
-    peak_mailbox: 0,
+    peak_mailbox: 28,
+    pattern_updates: 48,
+    gate_closures: 0,
+    gated_ms: 0,
     skipped_processes: 0,
     invalid_calls: 0
   },
@@ -82,7 +84,7 @@ coverage: %{
   elixir: "1.17.0",
   observer: %{
     status: :stopped,
-    started_at: 1795280939587,
+    started_at: 1795286223824,
     handler_failures: [
       %{
         count: 1,
@@ -91,23 +93,23 @@ coverage: %{
         handler_id: "demo-app-crasher"
       }
     ],
-    finished_at: 1795280946741,
-    total_events: 824,
     dropped_events: 0,
+    finished_at: 1795286231778,
+    total_events: 839,
     callback_errors: 0,
-    ets_memory_bytes: 124256,
+    ets_memory_bytes: 118912,
     sample_rate: 1.0,
-    ets_rows: 443,
-    recorded_events: 824
+    ets_rows: 406,
+    recorded_events: 839
   },
-  static_scan_ms: 615,
+  static_scan_ms: 888,
   static_summary: %{
     events: 185,
     unresolved_patterns: 17,
     patterns: 36,
     spans: 50,
-    by_status: %{static_only: 170, referenced_only: 15},
     by_confidence: %{resolved: 97, literal: 72, referenced: 15, configured: 1},
+    by_status: %{static_only: 170, referenced_only: 15},
     patterns_by_class: %{dynamic: 1, partial: 35},
     wrapper_templates: 16
   },

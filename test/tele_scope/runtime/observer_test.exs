@@ -119,7 +119,13 @@ defmodule TeleScope.Runtime.ObserverTest do
     assert Observer.snapshot(pid).attached_events == [[:ok, :name]]
   end
 
+  # [:telemetry, :handler, :failure] exists since telemetry 1.1.0
+  _ = Application.load(:telemetry)
+  @failure_event? Version.match?(to_string(Application.spec(:telemetry, :vsn)), ">= 1.1.0")
+
   @tag capture_log: true
+  @tag skip:
+         if(@failure_event?, do: false, else: "telemetry < 1.1 emits no handler failure event")
   test "records handlers that fail and get detached by telemetry" do
     pid = start([[:obs, :crash]])
     :ok = :telemetry.attach("obs-crasher", [:obs, :crash], &Crasher.handle/4, nil)

@@ -1,13 +1,28 @@
 Resolving Hex dependencies...
-Resolution completed in 0.047s
+Resolution completed in 0.087s
 Unchanged:
+  earmark_parser 1.4.46
+  ex_doc 0.40.5
+  makeup 1.2.3
+  makeup_elixir 1.0.1
+  makeup_erlang 1.1.0
+  nimble_parsec 1.4.2
   telemetry 1.4.3
 All dependencies have been fetched
-Running ExUnit with seed: 563193, max_cases: 24
+Compiling 1 file (.ex)
+warning: the following files do not match any of the configured `:test_load_filters` / `:test_ignore_filters`:
+
+test/audit/repro.exs
+
+This might indicate a typo in a test file name (for example, using "foo_tests.exs" instead of "foo_test.exs").
+
+See the configuration for `:test_pattern` under `mix help test` for more information.
+
+Running ExUnit with seed: 369638, max_cases: 24
 Excluding tags: [:bench]
 Including tags: [:peer]
 
-.........................................................................................
-Finished in 4.8 seconds (0.9s async, 3.9s sync)
+....................................................................................................
+Finished in 5.7 seconds (0.9s async, 4.8s sync)
 
-Result: 89 passed (2 doctests, 87 tests)
+Result: 100 passed (2 doctests, 98 tests)

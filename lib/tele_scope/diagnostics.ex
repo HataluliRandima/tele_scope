@@ -17,7 +17,37 @@ defmodule TeleScope.Diagnostics do
 
   alias TeleScope.{Catalog, Event, EventName}
 
-  @sensitive ~r/(pass(word|wd)?|secret|token|api_?key|auth(orization)?|cookie|session|credential|private_?key|ssn|credit_?card)/i
+  # Matched against whole `_`/camelCase-separated segments of a key name, not
+  # substrings: substring matching flagged :author_id, :passenger_count,
+  # :compass_heading, :bypass_cache, :tokenizer_ms and :classname (audit),
+  # which made `mix telemetry.check --strict` fail on innocent keys.
+  @sensitive_segments ~w(password passwd pwd passphrase secret secrets token tokens
+                         authorization auth cookie cookies credential credentials
+                         ssn cvv cvc apikey privatekey)
+  @sensitive_pairs [
+    ~w(api key),
+    ~w(private key),
+    ~w(credit card),
+    ~w(card number),
+    ~w(access key),
+    ~w(session id),
+    ~w(client secret)
+  ]
+
+  @doc false
+  def sensitive_key?(key) when is_atom(key) do
+    segments =
+      key
+      |> Atom.to_string()
+      |> String.replace(~r/([a-z0-9])([A-Z])/, "\\1_\\2")
+      |> String.downcase()
+      |> String.split(~r/[_\-.]+/, trim: true)
+
+    Enum.any?(segments, &(&1 in @sensitive_segments)) or
+      Enum.any?(Enum.chunk_every(segments, 2, 1, :discard), &(&1 in @sensitive_pairs))
+  end
+
+  def sensitive_key?(_), do: false
 
   @type diagnostic :: %{
           check: atom(),
@@ -220,7 +250,7 @@ defmodule TeleScope.Diagnostics do
         {section, stats} <- [measurements: e.measurements, metadata: e.metadata],
         {key, _} <- stats,
         is_atom(key),
-        Regex.match?(@sensitive, Atom.to_string(key)) do
+        sensitive_key?(key) do
       d(
         :sensitive_key,
         :warning,
@@ -305,18 +335,31 @@ defmodule TeleScope.Diagnostics do
       end
 
     obs_diags =
-      if obs[:dropped_events] && obs[:dropped_events] > 0 do
-        [
-          d(
-            :capture_limited,
-            :warning,
-            nil,
-            "Observer hit :max_events; #{obs.dropped_events} events were not shape-recorded",
-            %{}
-          )
-        ]
-      else
-        []
+      cond do
+        obs[:status] == :crashed ->
+          [
+            d(
+              :capture_limited,
+              :warning,
+              nil,
+              "Observer crashed during the capture (#{obs[:error]}); shapes and counts are missing",
+              %{}
+            )
+          ]
+
+        obs[:dropped_events] && obs[:dropped_events] > 0 ->
+          [
+            d(
+              :capture_limited,
+              :warning,
+              nil,
+              "Observer hit :max_events; #{obs.dropped_events} events were not shape-recorded",
+              %{}
+            )
+          ]
+
+        true ->
+          []
       end
 
     trace_diags ++ obs_diags

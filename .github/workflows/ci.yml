@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      MIX_ENV: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # minimum supported: legacy erlang:trace/3 backend
+          - elixir: "1.15"
+            otp: "26"
+          # trace sessions (OTP 27+)
+          - elixir: "1.17"
+            otp: "27"
+          - elixir: "1.18"
+            otp: "27"
+          - elixir: "1.19"
+            otp: "28"
+          # newest pairing tested during the pre-release audit
+          - elixir: "1.20"
+            otp: "29"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+
+      - name: Cache deps and _build
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-test-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            mix-test-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+
+      - run: mix deps.get
+      - run: mix compile --warnings-as-errors
+      # --include peer: the multi-node test (stdio :peer, no epmd needed)
+      - run: mix test --include peer
+
+  telemetry-versions:
+    name: test (telemetry ${{ matrix.telemetry }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      MIX_ENV: test
+    strategy:
+      fail-fast: false
+      matrix:
+        # 1.0.0 has no [:telemetry, :handler, :failure] event (one test is
+        # skipped by design); 1.1.0 is the first version with full support
+        telemetry: ["1.0.0", "1.1.0", "1.2.1", "1.3.0"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17"
+          otp-version: "27"
+
+      - name: Pin :telemetry to ${{ matrix.telemetry }}
+        run: |
+          sed -i 's/{:telemetry, "~> 1.0"}/{:telemetry, "== ${{ matrix.telemetry }}"}/' mix.exs
+          grep -q '{:telemetry, "== ${{ matrix.telemetry }}"}' mix.exs
+          rm mix.lock
+
+      - run: mix deps.get
+      - run: mix test --include peer
+
+  quality:
+    name: format, docs, package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          # the formatter's output can differ between Elixir versions; check
+          # with the version the code base is formatted with
+          elixir-version: "1.17"
+          otp-version: "27"
+
+      - name: Cache deps and _build
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-dev-${{ runner.os }}-27-1.17-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            mix-dev-${{ runner.os }}-27-1.17-
+
+      - run: mix deps.get
+      - run: mix format --check-formatted
+      - run: mix compile --warnings-as-errors
+      - run: mix docs --warnings-as-errors
+      - name: Build Hex package
+        run: mix hex.build
+
+  phoenix-smoke:
+    name: smoke test on a fresh Phoenix app
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: tele_scope
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17"
+          otp-version: "27"
+
+      - name: Generate a Phoenix app (default generator, Postgres)
+        run: |
+          mix local.hex --force
+          mix archive.install hex phx_new --force
+          mix phx.new smoke_app --no-install
+
+      - name: Add TeleScope as a path dependency
+        working-directory: smoke_app
+        run: |
+          # insert as the first dependency; independent of the generator's
+          # exact dependency list
+          sed -i '/defp deps do/{n;s|\[|[\n      {:tele_scope, path: "../tele_scope", only: [:dev, :test], runtime: false},|}' mix.exs
+          grep -q ':tele_scope, path: "../tele_scope"' mix.exs
+          mix deps.get
+
+      # static checks only: no database is needed. A fresh app must produce
+      # no warnings (no false positives).
+      - name: mix telemetry.check --strict
+        working-directory: smoke_app
+        run: mix telemetry.check --strict
+
+      - name: mix telemetry.explore (JSON must parse)
+        working-directory: smoke_app
+        run: |
+          mix telemetry.explore --format json --output telescope.json
+          python3 -c "import json; d = json.load(open('telescope.json')); assert d['schema_version'] == 1 and d['events'], 'no events'; print(len(d['events']), 'events')"

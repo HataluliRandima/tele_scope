@@ -16,32 +16,47 @@ defmodule TeleScope.Runtime.Tracer do
       patterns miss.
     * **Adaptive suppression**: once a name is known, the match spec is
       re-installed with guard `not is_map_key('$1', {const, Known})`, so known
-      names stop producing messages. `is_map_key` against a constant map is
-      O(1); measured cost is flat from 1 to 10,000 known names. Names already
-      known from static analysis can be pre-suppressed (`:known`).
+      names stop producing messages (O(1), flat from 1 to 10,000 names).
     * Names longer than 16 segments or improper lists are filtered in the
       match spec guard (no message, no copy).
+
+  ## Bounding mailbox growth (pre-release audit, experiment B6)
+
+  Re-installing a trace pattern waits for every scheduler to pass a
+  thread-progress point: 53-166 ms with all schedulers emitting. A new *hot*
+  name leaks one message per call during that window (128k-226k messages
+  measured). Therefore:
+
+    * patterns are re-installed by a short-lived **installer** process, so
+      the tracer keeps draining and watching its mailbox;
+    * the match spec also requires a **gate bit** of the VM's trace control
+      word to be clear. When the mailbox exceeds `:gate_threshold`, the
+      tracer sets the bit (one atomic write, ~2 us), which stops all
+      *unknown-name* messages immediately; it clears the bit once suppression
+      has been installed and the mailbox has drained. Names emitted only while
+      the gate is closed are missed; the result reports `gate_closures` and
+      `gated_ms` so this is never silent;
+    * the hard circuit breaker (`:max_mailbox`) remains as a last resort.
 
   ## Backends
 
     * `:session` (OTP 27+): `:trace.session_create/3`. Isolated from other
-      tracers (dbg, recon, observer); the session is owned by the tracer
-      process and is destroyed automatically if the tracer dies.
-    * `:legacy` (OTP 26): `:erlang.trace/3` + `:erlang.trace_pattern/3`.
-      Processes already traced by another tool are skipped by the VM (one
-      tracer per process) and patterns on `telemetry` are global. A janitor
-      process removes the patterns if the tracer is killed.
+      tracers; owned by the tracer process and destroyed with it.
+    * `:legacy` (OTP 26): `:erlang.trace/3` + global `:erlang.trace_pattern/3`.
+      Only **one** legacy tracer may run at a time (a second returns
+      `{:error, {:already_tracing, pid}}`): two would share global patterns
+      and the first to stop would blind the other (audit R1).
+
+  A janitor process removes patterns (legacy) and clears the gate bit if the
+  tracer is killed.
 
   ## Safety limits
 
-    * explicit start only; time-boxed (`:duration`, default 10s, max 10 min
-      unless `allow_long: true`)
-    * circuit breaker on the tracer's own mailbox (`:max_mailbox`)
-    * caps on total messages (`:max_messages`) and names (`:max_names`)
-    * stops when its owner process dies
+  Explicit start only; time-boxed (`:duration`, default 10 s, max 10 min
+  unless `allow_long: true`); gate + mailbox breaker; caps on messages and
+  names; stops when its owner dies.
 
-  Counts reported by the tracer are **lower bounds** (a name stops being
-  counted once suppressed). Use the observer for event counts.
+  Counts reported by the tracer are **lower bounds**. Use the observer for counts.
   """
   use GenServer
 
@@ -54,16 +69,23 @@ defmodule TeleScope.Runtime.Tracer do
     allow_long: false,
     max_names: 1_000,
     max_messages: 200_000,
-    max_mailbox: 10_000,
+    # hard last-resort breaker (~8 MB of 14-16 word messages); the gate keeps
+    # the mailbox far below this in practice (BENCHMARKS.md, section 2)
+    max_mailbox: 50_000,
+    gate_threshold: 1_000,
     backend: :auto,
     known: [],
     suppress: true,
-    notify: nil,
-    suppress_debounce: 20
+    notify: nil
   ]
 
   @traced [{:telemetry, :execute, 3}, {:telemetry, :execute_lazy, 3}]
   @max_segments 16
+  # An unusual high bit of the trace control word, reserved for TeleScope.
+  @gate_bit 0x100000
+  @legacy_lock TeleScope.Runtime.Tracer.LegacyLock
+  @check_every 32
+  @gate_poll 5
 
   ## API -----------------------------------------------------------------------
 
@@ -84,7 +106,8 @@ defmodule TeleScope.Runtime.Tracer do
 
   Options: `:duration`, `:backend` (`:auto | :session | :legacy`), `:known`
   (names to pre-suppress), `:suppress`, `:max_names`, `:max_messages`,
-  `:max_mailbox`, `:notify` (pid receiving `{:telescope_tracer, :new_names, names}`).
+  `:max_mailbox`, `:gate_threshold`, `:notify` (pid receiving
+  `{:telescope_tracer, :new_names, names}`).
   """
   def start(opts \\ []) do
     opts = Keyword.put_new(opts, :owner, self())
@@ -111,7 +134,8 @@ defmodule TeleScope.Runtime.Tracer do
   def match_spec(known) when is_map(known) do
     guards = [
       {:is_list, :"$1"},
-      {:"=<", {:length, :"$1"}, @max_segments}
+      {:"=<", {:length, :"$1"}, @max_segments},
+      {:==, {:band, {:get_tcw}, @gate_bit}, 0}
     ]
 
     guards =
@@ -121,6 +145,9 @@ defmodule TeleScope.Runtime.Tracer do
 
     [{[:"$1", :_, :_], guards, [{:message, :"$1"}]}]
   end
+
+  @doc false
+  def gate_bit, do: @gate_bit
 
   ## GenServer -------------------------------------------------------------------
 
@@ -132,8 +159,13 @@ defmodule TeleScope.Runtime.Tracer do
     # loaded yet (verified experimentally), so load telemetry explicitly.
     with :ok <- validate(opts),
          {:ok, backend} <- select_backend(opts[:backend]),
+         :ok <- acquire_lock(backend),
          {:module, :telemetry} <- Code.ensure_loaded(:telemetry) do
       Process.flag(:trap_exit, true)
+      # keeps reaction time short when emitters saturate every scheduler;
+      # per-message work is tiny and bounded by the gate and breaker
+      Process.flag(:priority, :high)
+      warm_up()
       owner_ref = Process.monitor(opts[:owner])
 
       known =
@@ -145,14 +177,18 @@ defmodule TeleScope.Runtime.Tracer do
         opts: opts,
         backend: backend,
         session: nil,
-        janitor: nil,
+        janitor: spawn_janitor(self(), backend),
         known: known,
         names: %{},
         invalid: 0,
         messages: 0,
         pattern_updates: 0,
-        pending_update: false,
+        installer: nil,
+        install_dirty: false,
         pending_notify: [],
+        gate_closed_at: nil,
+        gate_closures: 0,
+        gated_ms: 0,
         status: :running,
         warnings: [],
         started_at: System.system_time(:millisecond),
@@ -178,6 +214,22 @@ defmodule TeleScope.Runtime.Tracer do
     end
   end
 
+  # In interactive code loading mode (mix run, iex -S mix, tests) modules are
+  # loaded on first use. Loading them while handling the first message of a
+  # burst delayed the gate by up to ~250 ms (audit: 7k-87k queued messages on
+  # the first burst in a fresh VM vs 1-2k afterwards). Load and exercise the
+  # message path up front.
+  defp warm_up do
+    for mod <- [TeleScope.EventName, Process, Map, System, Bitwise, :proc_lib],
+        do: Code.ensure_loaded(mod)
+
+    _ = TeleScope.EventName.valid_name?([:warm, :up])
+    _ = process_info(self())
+    _ = Process.info(self(), :message_queue_len)
+    _ = :erlang.system_info(:trace_control_word)
+    :ok
+  end
+
   defp validate(opts) do
     d = opts[:duration]
 
@@ -188,7 +240,7 @@ defmodule TeleScope.Runtime.Tracer do
       d > opts[:max_duration] and not opts[:allow_long] ->
         {:error, {:duration_too_long, d, opts[:max_duration]}}
 
-      not Enum.all?(opts[:known], &is_list/1) ->
+      not is_list(opts[:known]) or not Enum.all?(opts[:known], &is_list/1) ->
         {:error, {:invalid_option, :known}}
 
       true ->
@@ -207,6 +259,16 @@ defmodule TeleScope.Runtime.Tracer do
   defp select_backend(:legacy), do: {:ok, :legacy}
   defp select_backend(other), do: {:error, {:invalid_option, {:backend, other}}}
 
+  # Legacy patterns and the `:all` tracer flag are VM-global: one at a time.
+  defp acquire_lock(:legacy) do
+    Process.register(self(), @legacy_lock)
+    :ok
+  rescue
+    ArgumentError -> {:error, {:already_tracing, Process.whereis(@legacy_lock)}}
+  end
+
+  defp acquire_lock(_), do: :ok
+
   @impl true
   def handle_info({:trace, _pid, :call, {_m, _f, _a}, name} = msg, state) do
     state = %{state | messages: state.messages + 1}
@@ -214,18 +276,38 @@ defmodule TeleScope.Runtime.Tracer do
     {:noreply, check_limits(state)}
   end
 
-  def handle_info(:update_pattern, state) do
-    state = %{state | pending_update: false}
+  def handle_info({:installed, pid, result}, %{installer: pid} = state) do
+    state = %{state | installer: nil, pattern_updates: state.pattern_updates + 1}
 
     state =
-      if state.status == :running do
-        install_patterns(state)
-        %{state | pattern_updates: state.pattern_updates + 1}
-      else
-        state
+      case result do
+        :ok ->
+          state
+
+        {:error, reason} ->
+          %{state | warnings: ["pattern update failed: #{inspect(reason)}" | state.warnings]}
       end
 
-    {:noreply, flush_notify(state)}
+    state =
+      if state.install_dirty, do: start_install(%{state | install_dirty: false}), else: state
+
+    {:noreply, state |> maybe_open_gate() |> flush_notify()}
+  end
+
+  def handle_info({:EXIT, pid, reason}, %{installer: pid} = state) when reason != :normal do
+    state = %{
+      state
+      | installer: nil,
+        warnings: ["installer crashed: #{inspect(reason)}" | state.warnings]
+    }
+
+    {:noreply, maybe_open_gate(state)}
+  end
+
+  def handle_info(:gate_poll, state) do
+    state = maybe_open_gate(state)
+    if state.gate_closed_at, do: Process.send_after(self(), :gate_poll, @gate_poll)
+    {:noreply, state}
   end
 
   def handle_info(:time_limit, state), do: {:noreply, stop_tracing(state, :completed)}
@@ -256,7 +338,7 @@ defmodule TeleScope.Runtime.Tracer do
     _ = :trace.process(session, :all, true, [:call, :arity])
     state = %{state | session: session}
 
-    case install_patterns(state) do
+    case install_patterns(state.backend, session, state.known) do
       :ok -> {:ok, state}
       {:error, reason} -> {:error, reason}
     end
@@ -266,7 +348,6 @@ defmodule TeleScope.Runtime.Tracer do
 
   defp start_tracing(%{backend: :legacy} = state) do
     me = self()
-    janitor = spawn(fn -> legacy_janitor(me) end)
     _ = :erlang.trace(:all, true, [:call, :arity, {:tracer, me}])
     _ = :erlang.trace(me, false, [:call, :arity])
 
@@ -281,14 +362,9 @@ defmodule TeleScope.Runtime.Tracer do
         do: ["#{skipped} processes are already traced by another tool and are not observed"],
         else: []
 
-    state = %{
-      state
-      | janitor: janitor,
-        skipped_processes: skipped,
-        warnings: warnings ++ state.warnings
-    }
+    state = %{state | skipped_processes: skipped, warnings: warnings ++ state.warnings}
 
-    case install_patterns(state) do
+    case install_patterns(:legacy, nil, state.known) do
       :ok -> {:ok, state}
       {:error, reason} -> {:error, reason}
     end
@@ -302,13 +378,13 @@ defmodule TeleScope.Runtime.Tracer do
     _, _ -> nil
   end
 
-  defp install_patterns(state) do
-    ms = match_spec(state.known)
+  defp install_patterns(backend, session, known) do
+    ms = match_spec(known)
 
     results =
       for mfa <- @traced do
-        case state.backend do
-          :session -> :trace.function(state.session, mfa, ms, [:local])
+        case backend do
+          :session -> :trace.function(session, mfa, ms, [:local])
           :legacy -> :erlang.trace_pattern(mfa, ms, [:local])
         end
       end
@@ -317,16 +393,34 @@ defmodule TeleScope.Runtime.Tracer do
     if Enum.at(results, 0) == 0,
       do: {:error, :telemetry_execute_not_traceable},
       else: :ok
+  rescue
+    e -> {:error, Exception.message(e)}
   end
 
   defp stop_tracing(%{status: :running} = state, status) do
     if state.timer, do: Process.cancel_timer(state.timer)
+    state = await_installer(state)
     teardown(state)
-    state = drain(state)
+    state = state |> open_gate() |> drain()
+    send(state.janitor, :done)
     %{state | status: status, finished_at: System.system_time(:millisecond)} |> flush_notify()
   end
 
   defp stop_tracing(state, _status), do: state
+
+  # An installer finishing *after* teardown would re-install patterns.
+  defp await_installer(%{installer: nil} = state), do: state
+
+  defp await_installer(%{installer: pid} = state) do
+    receive do
+      {:installed, ^pid, _} -> :ok
+      {:EXIT, ^pid, _} -> :ok
+    after
+      5_000 -> Process.exit(pid, :kill)
+    end
+
+    %{state | installer: nil}
+  end
 
   defp teardown(%{backend: :session, session: session}) when session != nil do
     :trace.session_destroy(session)
@@ -334,9 +428,8 @@ defmodule TeleScope.Runtime.Tracer do
     _, _ -> :ok
   end
 
-  defp teardown(%{backend: :legacy, janitor: janitor}) do
+  defp teardown(%{backend: :legacy}) do
     legacy_cleanup(self())
-    if janitor, do: send(janitor, :done)
     :ok
   end
 
@@ -363,19 +456,28 @@ defmodule TeleScope.Runtime.Tracer do
     :ok
   end
 
-  defp legacy_janitor(tracer) do
-    ref = Process.monitor(tracer)
+  defp spawn_janitor(tracer, backend) do
+    spawn(fn ->
+      ref = Process.monitor(tracer)
 
-    receive do
-      :done ->
-        :ok
+      receive do
+        :done ->
+          :ok
 
-      {:DOWN, ^ref, :process, _, _} ->
-        # the VM clears process flags when a tracer dies, but trace patterns
-        # stay installed (verified in experiments/trace_session_experiment.exs)
-        for mfa <- @traced, do: :erlang.trace_pattern(mfa, false, [:local])
-        :ok
-    end
+        {:DOWN, ^ref, :process, _, _} ->
+          # the VM clears process flags when a tracer dies, but legacy trace
+          # patterns stay installed (experiments/trace_session_experiment.exs).
+          # Run twice: an installer killed with the tracer may finish its
+          # BIF call after the first cleanup.
+          for _ <- 1..2 do
+            if backend == :legacy,
+              do: for(mfa <- @traced, do: :erlang.trace_pattern(mfa, false, [:local]))
+
+            clear_gate_bit()
+            Process.sleep(200)
+          end
+      end
+    end)
   end
 
   # After tracing is disabled, already-sent messages are still delivered.
@@ -386,6 +488,73 @@ defmodule TeleScope.Runtime.Tracer do
     after
       0 -> state
     end
+  end
+
+  ## suppression installs -------------------------------------------------------------
+
+  # Leading edge: a new name triggers an install immediately unless one is in
+  # flight; names discovered meanwhile are batched into the next install.
+  defp schedule_install(%{installer: nil} = state), do: start_install(state)
+  defp schedule_install(state), do: %{state | install_dirty: true}
+
+  defp start_install(%{status: :running} = state) do
+    tracer = self()
+    {backend, session, known} = {state.backend, state.session, state.known}
+
+    pid =
+      spawn_link(fn ->
+        send(tracer, {:installed, self(), install_patterns(backend, session, known)})
+      end)
+
+    %{state | installer: pid}
+  end
+
+  defp start_install(state), do: state
+
+  ## gate --------------------------------------------------------------------------
+
+  defp close_gate(%{gate_closed_at: nil} = state) do
+    set_gate_bit()
+    Process.send_after(self(), :gate_poll, @gate_poll)
+
+    %{
+      state
+      | gate_closed_at: System.monotonic_time(:millisecond),
+        gate_closures: state.gate_closures + 1
+    }
+  end
+
+  defp close_gate(state), do: state
+
+  defp maybe_open_gate(%{gate_closed_at: nil} = state), do: state
+
+  defp maybe_open_gate(state) do
+    {:message_queue_len, len} = Process.info(self(), :message_queue_len)
+
+    if state.installer == nil and not state.install_dirty and
+         len < div(state.opts[:gate_threshold], 4),
+       do: open_gate(state),
+       else: state
+  end
+
+  defp open_gate(%{gate_closed_at: nil} = state), do: state
+
+  defp open_gate(state) do
+    clear_gate_bit()
+    elapsed = System.monotonic_time(:millisecond) - state.gate_closed_at
+    %{state | gate_closed_at: nil, gated_ms: state.gated_ms + elapsed}
+  end
+
+  defp set_gate_bit do
+    old = :erlang.system_info(:trace_control_word)
+    :erlang.system_flag(:trace_control_word, Bitwise.bor(old, @gate_bit))
+  end
+
+  defp clear_gate_bit do
+    old = :erlang.system_info(:trace_control_word)
+    :erlang.system_flag(:trace_control_word, Bitwise.band(old, Bitwise.bnot(@gate_bit)))
+  catch
+    _, _ -> :ok
   end
 
   ## recording ------------------------------------------------------------------------
@@ -415,19 +584,11 @@ defmodule TeleScope.Runtime.Tracer do
         state = %{state | pending_notify: [name | state.pending_notify]}
 
         if state.opts[:suppress] and state.status == :running do
-          state = %{state | known: Map.put(state.known, name, true)}
-          schedule_update(state)
+          schedule_install(%{state | known: Map.put(state.known, name, true)})
         else
           state
         end
     end
-  end
-
-  defp schedule_update(%{pending_update: true} = state), do: state
-
-  defp schedule_update(state) do
-    Process.send_after(self(), :update_pattern, state.opts[:suppress_debounce])
-    %{state | pending_update: true}
   end
 
   defp flush_notify(%{pending_notify: []} = state), do: state
@@ -468,9 +629,10 @@ defmodule TeleScope.Runtime.Tracer do
 
   defp check_limits(%{status: :running} = state) do
     state =
-      if rem(state.messages, 256) == 0 do
+      if rem(state.messages, @check_every) == 0 do
         {:message_queue_len, len} = Process.info(self(), :message_queue_len)
-        %{state | peak_mailbox: max(state.peak_mailbox, len)}
+        state = %{state | peak_mailbox: max(state.peak_mailbox, len)}
+        if len > state.opts[:gate_threshold], do: close_gate(state), else: state
       else
         state
       end
@@ -486,6 +648,11 @@ defmodule TeleScope.Runtime.Tracer do
   defp check_limits(state), do: state
 
   defp build_result(state) do
+    gated_now =
+      if state.gate_closed_at,
+        do: System.monotonic_time(:millisecond) - state.gate_closed_at,
+        else: 0
+
     %{
       status: state.status,
       backend: state.backend,
@@ -497,6 +664,8 @@ defmodule TeleScope.Runtime.Tracer do
       messages: state.messages,
       pattern_updates: state.pattern_updates,
       peak_mailbox: state.peak_mailbox,
+      gate_closures: state.gate_closures,
+      gated_ms: state.gated_ms + gated_now,
       skipped_processes: state.skipped_processes,
       warnings: state.warnings
     }

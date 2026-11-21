@@ -1,13 +1,20 @@
 Resolving Hex dependencies...
-Resolution completed in 0.037s
+Resolution completed in 0.059s
 Unchanged:
+  earmark_parser 1.4.46
+  ex_doc 0.40.5
+  makeup 1.2.3
+  makeup_elixir 1.0.1
+  makeup_erlang 1.1.0
+  nimble_parsec 1.4.2
   telemetry 1.4.3
 All dependencies are up to date
+Compiling 2 files (.ex)
 Excluding tags: [:bench]
 Including tags: [:peer]
 
-.........................................................................................
-Finished in 5.4 seconds (1.2s async, 4.1s sync)
-2 doctests, 87 tests, 0 failures
+....................................................................................................
+Finished in 5.3 seconds (0.8s async, 4.5s sync)
+2 doctests, 98 tests, 0 failures
 
-Randomized with seed 23765
+Randomized with seed 713873

@@ -1,8 +1,13 @@
 # Spike results
 
+> **Post-audit note.** This document records the spike as it happened. The
+> pre-release audit (PRE_RELEASE_AUDIT.md) found and fixed tracer mailbox
+> growth under bursts, concurrency and robustness issues, and re-measured
+> overhead with medians; current figures are in BENCHMARKS.md.
+
 All numbers below come from scripts in this repository; raw outputs are
-committed next to them ([experiments/results](experiments/results),
-[bench/results](bench/results), [spike/results](spike/results)).
+committed next to them ([experiments/results](https://github.com/HataluliRandima/tele_scope/tree/main/experiments/results),
+[bench/results](https://github.com/HataluliRandima/tele_scope/tree/main/bench/results), [spike/results](https://github.com/HataluliRandima/tele_scope/tree/main/spike/results)).
 
 **Environment.** Linux 6.6 (WSL2), 12 schedulers, 7 GB RAM. Erlang/OTP 26.1.2,
 27.0, 29.0; Elixir 1.15.8, 1.17.0, 1.20.1 (asdf). telemetry 1.4.3. Phoenix

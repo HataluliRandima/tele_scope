@@ -1,14 +1,16 @@
 %{
   tracer: %{
-    messages: 237,
+    messages: 232,
     status: :stopped,
     otp_release: "26",
-    started_at: 1795280939595,
+    started_at: 1795286223881,
     warnings: [],
+    finished_at: 1795286231562,
     backend: :legacy,
-    pattern_updates: 24,
-    finished_at: 1795280946663,
-    peak_mailbox: 0,
+    peak_mailbox: 28,
+    pattern_updates: 48,
+    gate_closures: 0,
+    gated_ms: 0,
     skipped_processes: 0,
     invalid_calls: 0
   },
@@ -16,7 +18,7 @@
   elixir: "1.17.0",
   observer: %{
     status: :stopped,
-    started_at: 1795280939587,
+    started_at: 1795286223824,
     handler_failures: [
       %{
         count: 1,
@@ -25,23 +27,23 @@
         handler_id: "demo-app-crasher"
       }
     ],
-    finished_at: 1795280946741,
-    total_events: 824,
     dropped_events: 0,
+    finished_at: 1795286231778,
+    total_events: 839,
     callback_errors: 0,
-    ets_memory_bytes: 124256,
+    ets_memory_bytes: 118912,
     sample_rate: 1.0,
-    ets_rows: 443,
-    recorded_events: 824
+    ets_rows: 406,
+    recorded_events: 839
   },
-  static_scan_ms: 615,
+  static_scan_ms: 888,
   static_summary: %{
     events: 185,
     unresolved_patterns: 17,
     patterns: 36,
     spans: 50,
-    by_status: %{static_only: 170, referenced_only: 15},
     by_confidence: %{resolved: 97, literal: 72, referenced: 15, configured: 1},
+    by_status: %{static_only: 170, referenced_only: 15},
     patterns_by_class: %{dynamic: 1, partial: 35},
     wrapper_templates: 16
   },

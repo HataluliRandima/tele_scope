@@ -18,7 +18,8 @@ defmodule Mix.Tasks.Telemetry.Check do
     duration: :integer,
     strict: :boolean,
     trace: :boolean,
-    verbose: :boolean
+    verbose: :boolean,
+    serve: :boolean
   ]
 
   @impl true

@@ -55,6 +55,20 @@ fundamental to the approach and should stay documented after the MVP.
 
 ## Runtime tracer
 
+* **Pressure gate.** Under a burst of unknown names the tracer sets bit 20
+  (`0x100000`) of the VM-global *trace control word* to stop unknown-name
+  messages. Names emitted *only* while the gate is closed are missed; the
+  result reports `gate_closures` and `gated_ms` (typically 0-100 ms per
+  burst). Tools that rely on the trace control word themselves (rare) may
+  interact with this bit. Concurrent TeleScope tracers on OTP 27+ share it.
+* **Residual burst backlog.** Between the first message of a new hot name and
+  the gate closing, messages still queue: ~12 in a warm VM, 1-27k in the
+  worst measured cases (OTP 26, 12 schedulers in a tight loop), i.e. a few MB
+  transiently. The hard breaker (`max_mailbox: 50_000`) stops tracing beyond
+  that.
+* **One legacy tracer at a time.** On OTP 26 a second tracer is refused with
+  `{:error, {:already_tracing, pid}}`.
+
 * **VM-wide cost while active**: about 0.35-0.7 us on every telemetry call,
   including events nobody cares about. Captures are time-boxed for this
   reason.
@@ -73,6 +87,7 @@ fundamental to the approach and should stay documented after the MVP.
   include boot events.
 * Names longer than 16 segments, improper lists and non-lists are ignored by
   the match spec (counted as invalid only when they are lists of non-atoms).
+* Handler-failure detection needs telemetry >= 1.1.
 * Only `telemetry:execute/3` and `execute_lazy/3` are traced (all other entry
   points funnel into them). An `execute_lazy` call without handlers is still
   discovered by its name.
@@ -129,6 +144,28 @@ fundamental to the approach and should stay documented after the MVP.
   not part of a `:telemetry.span/3` span are guesses (flagged), and gauges are
   recognised by name only.
 * The JSON schema (version 1) is not stable yet.
+
+## Trust boundaries
+
+* Scan only build output you trust (your `_build`). Decoding debug info uses
+  `binary_to_term` (as `beam_lib` does); a hostile `.beam` can create atoms
+  and, in the worst case, exhaust the atom table. TeleScope never calls a
+  debug-info backend other than `:elixir_erl` and `:erl_abstract_code`
+  (configurable via `config :tele_scope, debug_info_backends: [...]`) and
+  never executes scanned code.
+* Reports contain source file paths as recorded in debug info. For Erlang
+  modules these can be absolute paths of the build machine; review JSON
+  reports before publishing them.
+* Event *names* are recorded as emitted. An application that builds event
+  names from user input (an anti-pattern) would expose those atoms.
+
+## Not yet verified
+
+* `:telemetry.persist/0` (telemetry 1.4): each attach/detach then rewrites a
+  persistent term (a VM-wide literal-area scan). Functionally expected to
+  work; not measured.
+* Umbrella projects, Postgres-backed apps under `--runtime --serve`,
+  Elixir 1.16/1.18/1.19 and OTP 28 (not installed on the audit machine).
 
 ## Environment
 
