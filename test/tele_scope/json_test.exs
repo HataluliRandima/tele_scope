@@ -13,6 +13,8 @@ defmodule TeleScope.Reporters.JSONTest do
     assert enc(self()) =~ ~r/^"#PID/
     assert enc([:a | :b]) =~ "|"
     assert enc(MapSet.new([1])) == "[1]"
+    # invalid UTF-8 in keys and values never produces invalid JSON
+    assert enc(%{<<255, 254>> => <<255>>}) == ~s({"<<255, 254>>":"<<255>>"})
   end
 
   if Code.ensure_loaded?(:json) and function_exported?(:json, :decode, 1) do

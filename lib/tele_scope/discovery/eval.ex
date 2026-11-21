@@ -90,8 +90,23 @@ defmodule TeleScope.Discovery.Eval do
   def list({nil, _}, _env), do: [[]]
 
   def list({:cons, _, head, tail}, env) do
-    for h <- seg(head, env), t <- list(tail, env), do: prepend(h, t)
+    heads = seg(head, env)
+    tails = list(tail, env)
+
+    # cap *before* building the product: n segments with k alternatives each
+    # would otherwise build k^n lists (audit R7: 6 x 10 -> 1.2 s, +137 MB)
+    if length(heads) * length(tails) > @max_alternatives do
+      [[{:splice, :unknown}]]
+    else
+      for h <- heads, t <- tails, do: prepend(h, t)
+    end
   end
+
+  # A branch that raises/throws/exits produces no value (audit R5: such a
+  # branch used to add a spurious fully-dynamic alternative).
+  def list({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, f}}, _args}, _env)
+      when f in [:error, :raise, :throw, :exit],
+      do: []
 
   def list({:op, _, :++, a, b}, env), do: append(list(a, env), list(b, env))
 
@@ -124,6 +139,11 @@ defmodule TeleScope.Discovery.Eval do
 
   @doc false
   def seg({:atom, _, a}, _env), do: [a]
+
+  def seg({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, f}}, _args}, _env)
+      when f in [:error, :raise, :throw, :exit],
+      do: []
+
   def seg({:var, _, name}, env), do: var(name, env, :seg)
   def seg({:match, _, _left, right}, env), do: seg(right, env)
   def seg({:block, _, exprs}, env), do: seg(List.last(exprs), env)
@@ -140,6 +160,9 @@ defmodule TeleScope.Discovery.Eval do
 
   defp prepend(_h, :invalid), do: :invalid
   defp prepend(h, t), do: [h | t]
+
+  defp append(as, bs) when length(as) * length(bs) > @max_alternatives,
+    do: [[{:splice, :unknown}]]
 
   defp append(as, bs) do
     for a <- as, b <- bs do

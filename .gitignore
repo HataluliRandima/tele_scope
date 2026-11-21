@@ -10,3 +10,5 @@ erl_crash.dump
 /test/fixtures/beams/
 /_build_matrix/
 .elixir_ls/
+/doc/
+/tele_scope-*.tar

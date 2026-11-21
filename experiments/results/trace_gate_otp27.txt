@@ -1,0 +1,4 @@
+OTP 27
+Q1 get_tcw in guard: open={:ok, [:a], [], []} closed={:ok, false, [], []}
+Q2 trace_pattern re-install under load: 53 ms; tracer mailbox 128180 -> 128180 20 ms after (suppressed)
+Q3 gate close took 2 us; tracer mailbox 13908 at close -> 15421 20 ms later (growth 1513)

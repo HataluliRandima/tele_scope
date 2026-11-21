@@ -20,6 +20,7 @@ defmodule TeleScope.Discovery.Beam do
           | {:file_error, term()}
           | {:debug_info_error, term()}
           | {:backend_unavailable, module()}
+          | {:untrusted_backend, atom()}
 
   @doc """
   Reads the external call table of a module. Returns `{:ok, module, imports}`
@@ -73,24 +74,39 @@ defmodule TeleScope.Discovery.Beam do
     end
   end
 
+  # The backend module is named *inside* the .beam file. Calling an
+  # arbitrary module named by an untrusted file is unacceptable (audit R6),
+  # so only the backends shipped by Erlang/OTP and Elixir are used. Others
+  # can be enabled explicitly: config :tele_scope, debug_info_backends: [...]
+  @default_backends [:elixir_erl, :erl_abstract_code]
+
   defp from_backend(module, backend, data) do
-    if Code.ensure_loaded?(backend) and function_exported?(backend, :debug_info, 4) do
-      try do
-        case backend.debug_info(:erlang_v1, module, data, []) do
-          {:ok, forms} -> {:ok, module, forms}
-          # e.g. Erlang modules compiled without +debug_info carry
-          # {debug_info_v1, erl_abstract_code, {none, Opts}}
-          {:error, :missing} -> {:error, :no_debug_info}
-          {:error, reason} -> {:error, {:debug_info_error, reason}}
-        end
-      rescue
-        e -> {:error, {:debug_info_error, Exception.message(e)}}
-      catch
-        kind, reason -> {:error, {:debug_info_error, {kind, reason}}}
-      end
-    else
-      {:error, {:backend_unavailable, backend}}
+    allowed = @default_backends ++ Application.get_env(:tele_scope, :debug_info_backends, [])
+
+    cond do
+      backend not in allowed ->
+        {:error, {:untrusted_backend, backend}}
+
+      Code.ensure_loaded?(backend) and function_exported?(backend, :debug_info, 4) ->
+        call_backend(module, backend, data)
+
+      true ->
+        {:error, {:backend_unavailable, backend}}
     end
+  end
+
+  defp call_backend(module, backend, data) do
+    case backend.debug_info(:erlang_v1, module, data, []) do
+      {:ok, forms} -> {:ok, module, forms}
+      # e.g. Erlang modules compiled without +debug_info carry
+      # {debug_info_v1, erl_abstract_code, {none, Opts}}
+      {:error, :missing} -> {:error, :no_debug_info}
+      {:error, reason} -> {:error, {:debug_info_error, reason}}
+    end
+  rescue
+    e -> {:error, {:debug_info_error, Exception.message(e)}}
+  catch
+    kind, reason -> {:error, {:debug_info_error, {kind, reason}}}
   end
 
   defp legacy_abstract_code(path) do

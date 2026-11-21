@@ -2,17 +2,19 @@
 
 **Telemetry discovery, observation and diagnostics for Elixir and Erlang applications.**
 
-> Status: **engineering spike** (`0.1.0-spike`). Everything described here is
-> implemented and tested, but the API is not stable and the package is not
-> published. See [SPIKE_RESULTS.md](SPIKE_RESULTS.md) for the evidence and
-> [ROADMAP.md](ROADMAP.md) for the proposed MVP.
+> Status: **release candidate** (`0.1.0-rc.1`), not yet published. Everything
+> described here is implemented and tested; the API of modules grouped as
+> "Internals" in the docs may still change. Evidence:
+> [SPIKE_RESULTS.md](SPIKE_RESULTS.md); pre-release audit:
+> [PRE_RELEASE_AUDIT.md](https://github.com/HataluliRandima/tele_scope/blob/main/PRE_RELEASE_AUDIT.md);
+> roadmap: [ROADMAP.md](ROADMAP.md).
 
 TeleScope answers four questions:
 
 | Question | Mechanism | Cost |
 |---|---|---|
 | Which telemetry events **can** my app and its dependencies emit? | Static analysis of compiled `.beam` files (debug info -> Erlang abstract forms) + library rules | ~0.6 s for a Phoenix app with 840 modules; no app start |
-| Which events **actually fire**, with which measurement/metadata **shapes**? | Time-boxed runtime capture: shape observer + event-name tracer | ~1-3 us per observed event + ~0.4-0.7 us per telemetry call while tracing; opt-in only |
+| Which events **actually fire**, with which measurement/metadata **shapes**? | Time-boxed runtime capture: shape observer + event-name tracer | ~1-3 us per observed event + ~0.4-1.5 us per telemetry call while tracing; opt-in only |
 | Which events have **handlers**, and do those handlers **run**? | `:telemetry.list_handlers([])` + `call_count` tracing | ~0.03-0.1 us per handler call while active |
 | Which **Telemetry.Metrics** definitions should I write? | Heuristics over the catalog, every suggestion explained | offline |
 
@@ -22,7 +24,7 @@ event without a handler is never reported as an error.
 
 ## What it found in a fresh Phoenix + Ecto + Oban + Finch app
 
-From the spike ([spike/results](spike/results), identical on OTP 26, 27 and 29):
+From the spike ([spike/results](https://github.com/HataluliRandima/tele_scope/tree/main/spike/results), identical on OTP 26, 27 and 29):
 
 * **170** emittable event names discovered statically across 36 applications in ~0.6 s
   (60 literal call sites, 65 more resolved through wrapper functions such as
@@ -62,11 +64,20 @@ demo_app.repo.query              observed   count=113
 
 ## Usage
 
-Add the dependency (path or git while unpublished):
+Add the dependency. TeleScope is a development tool: keep it out of
+production releases with `only:` and `runtime: false` (it is still available
+in `iex -S mix` during development):
 
 ```elixir
-{:tele_scope, path: "../tele_scope", only: [:dev, :test], runtime: false}
+# once published (pre-releases must be requested explicitly)
+{:tele_scope, "~> 0.1.0-rc.1", only: [:dev, :test], runtime: false}
+
+# until then
+{:tele_scope, github: "HataluliRandima/tele_scope", only: [:dev, :test], runtime: false}
 ```
+
+Static discovery needs debug info, which Mix includes by default in `dev` and
+`test` builds. Run it against `_build`, not against a stripped release.
 
 ### CLI
 
@@ -74,6 +85,8 @@ Add the dependency (path or git while unpublished):
 mix telemetry.explore                          # static discovery
 mix telemetry.explore --verbose                # + call sites, rules, shapes, handlers
 mix telemetry.explore --runtime --duration 15000   # start the app, capture for 15 s
+mix telemetry.explore --runtime --serve        # Phoenix: start endpoints like phx.server
+mix telemetry.explore --app my_app             # only events of my_app (repeatable)
 mix telemetry.explore --metrics                # + Telemetry.Metrics suggestions
 mix telemetry.explore --format json --output telescope.json
 mix telemetry.check                            # diagnostics; non-zero exit on errors
@@ -140,7 +153,14 @@ What it cannot do: [LIMITATIONS.md](LIMITATIONS.md).
   data) are collapsed. Handler `config` terms are never copied (type only).
   The tracer never copies other processes' dictionaries.
 * Bounded memory: observer rows (`max_rows`), shapes per event, events
-  (soft cap), tracer names, messages and mailbox (circuit breaker).
+  (soft cap), tracer names and messages. The tracer's mailbox is protected by
+  adaptive suppression, a pressure gate (closes in ~2 us and is reported as
+  `gated_ms`) and a last-resort circuit breaker.
+* On OTP 26 only one tracer can run at a time (`{:error, {:already_tracing,
+  pid}}`); OTP 27+ trace sessions are isolated from each other and from other
+  tracing tools.
+* Static analysis never executes scanned code; only the debug-info backends
+  shipped with Erlang/OTP and Elixir are used to decode `.beam` files.
 * Cleanup is verified by tests for `:kill` of every component: handlers are
   detached by a janitor, trace patterns removed, sessions destroyed.
 * Sensitive-looking metadata keys (`password`, `token`, `secret`, ...) are
@@ -148,16 +168,17 @@ What it cannot do: [LIMITATIONS.md](LIMITATIONS.md).
 
 ## Compatibility
 
-Tested ([experiments/results/test_matrix_*](experiments/results)) on:
+Tested ([experiments/results/test_matrix_*](https://github.com/HataluliRandima/tele_scope/tree/main/experiments/results)) on:
 
 | Elixir | OTP | Tracing backend | Tests |
 |---|---|---|---|
-| 1.15.8 | 26.1.2 | legacy `erlang:trace/3` | 87 pass |
-| 1.17.0 | 26.1.2 | legacy | 87 pass |
-| 1.17.0 | 27.0 | trace sessions | 87 pass |
-| 1.20.1 | 29.0 | trace sessions | 87 pass |
+| 1.15.8 | 26.1.2 | legacy `erlang:trace/3` | 98 tests + 2 doctests pass |
+| 1.17.0 | 26.1.2 | legacy | 98 + 2 pass |
+| 1.17.0 | 27.0 | trace sessions | 98 + 2 pass |
+| 1.20.1 | 29.0 | trace sessions | 98 + 2 pass |
 
-telemetry 1.4.3 (the tracer also handles 1.0-1.3, which lack `execute_lazy`).
+`:telemetry` 1.0 to 1.4 are tested. Handler-failure detection needs
+telemetry >= 1.1 (1.0 does not emit `[:telemetry, :handler, :failure]`).
 
 ## Repository layout
 
@@ -172,7 +193,7 @@ lib/tele_scope/diagnostics.ex      checks
 lib/tele_scope/metrics.ex          Telemetry.Metrics suggestions
 lib/tele_scope/reporters/          console.ex, json.ex (dependency-free encoder)
 lib/mix/tasks/                     telemetry.explore, telemetry.check
-test/                              87 tests (static, runtime, failure modes, multi-node)
+test/                              98 tests (static, runtime, failure modes, multi-node, audit regressions)
 experiments/                       standalone experiments + raw results
 bench/                             benchmarks + raw results
 spike/demo_app                     Phoenix/Ecto/Oban/Finch spike application

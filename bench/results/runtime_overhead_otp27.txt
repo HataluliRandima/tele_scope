@@ -1,38 +1,45 @@
+==> earmark_parser
+==> nimble_parsec
+==> makeup
+==> makeup_elixir
+==> makeup_erlang
+==> ex_doc
+==> tele_scope
 OTP 27 / Elixir 1.17.0 / schedulers 12 / N=200000
 tracing backend: session
 
 == small metadata (4 keys), single process
-baseline: no handlers                                             172 ns   +     0 ns
-reference: one no-op handler                                      224 ns   +    52 ns
-observer (shape recording)                                       1350 ns   +  1178 ns
-observer, sample_rate 0.1                                         642 ns   +   470 ns
-observer after max_events reached (no-op path)                    385 ns   +   213 ns
-tracer, name pre-suppressed (known)                               827 ns   +   655 ns
-tracer, discovered then suppressed (5,000 known names)            803 ns   +   631 ns
-tracer WITHOUT suppression (worst case, every call sends)        1943 ns   +  1771 ns
-    -> tracer peak mailbox 463985, messages 1414000
-one no-op handler + call_count invocation tracking                251 ns   +    79 ns
-full capture: observer + tracer (known name)                     2229 ns   +  2057 ns
+baseline: no handlers                                        min    180 (+    0)  median    216 (+    0)  max    258 ns
+reference: one no-op handler                                 min    205 (+   25)  median    218 (+    3)  max    298 ns
+observer (shape recording)                                   min   1281 (+ 1101)  median   1676 (+ 1461)  max   3926 ns
+observer, sample_rate 0.1                                    min    818 (+  638)  median    908 (+  693)  max   1324 ns
+observer after max_events reached (no-op path)               min    576 (+  396)  median    862 (+  647)  max   1528 ns
+tracer, name pre-suppressed (known)                          min   1215 (+ 1035)  median   1502 (+ 1287)  max   1649 ns
+tracer, discovered then suppressed (5,000 known names)       min   1655 (+ 1474)  median   1723 (+ 1508)  max   2317 ns
+tracer WITHOUT suppression (worst case, every call sends)    min   1951 (+ 1771)  median   2734 (+ 2518)  max   3441 ns
+    -> tracer peak mailbox 2310, messages 954168
+one no-op handler + call_count invocation tracking           min    268 (+   88)  median    331 (+  116)  max    373 ns
+full capture: observer + tracer (known name)                 min   2425 (+ 2245)  median   2900 (+ 2685)  max   3771 ns
 
 == large metadata (30 keys, struct, 10KB binary), single process
-baseline: no handlers                                             157 ns   +     0 ns
-reference: one no-op handler                                      217 ns   +    60 ns
-observer (shape recording)                                       3208 ns   +  3051 ns
-observer, sample_rate 0.1                                         775 ns   +   618 ns
-observer after max_events reached (no-op path)                    488 ns   +   331 ns
-tracer, name pre-suppressed (known)                               786 ns   +   630 ns
-tracer, discovered then suppressed (5,000 known names)            845 ns   +   689 ns
-tracer WITHOUT suppression (worst case, every call sends)        1851 ns   +  1694 ns
-    -> tracer peak mailbox 484366, messages 1414000
-one no-op handler + call_count invocation tracking                222 ns   +    65 ns
-full capture: observer + tracer (known name)                     3381 ns   +  3224 ns
+baseline: no handlers                                        min    151 (+    0)  median    156 (+    0)  max    204 ns
+reference: one no-op handler                                 min    220 (+   69)  median    239 (+   83)  max    310 ns
+observer (shape recording)                                   min   2891 (+ 2740)  median   3293 (+ 3137)  max   4630 ns
+observer, sample_rate 0.1                                    min    682 (+  531)  median    776 (+  619)  max    979 ns
+observer after max_events reached (no-op path)               min    426 (+  275)  median    467 (+  311)  max    615 ns
+tracer, name pre-suppressed (known)                          min    980 (+  829)  median   1051 (+  894)  max   1236 ns
+tracer, discovered then suppressed (5,000 known names)       min    798 (+  646)  median    822 (+  666)  max   1641 ns
+tracer WITHOUT suppression (worst case, every call sends)    min   1107 (+  955)  median   1396 (+ 1240)  max   1957 ns
+    -> tracer peak mailbox 1649, messages 842676
+one no-op handler + call_count invocation tracking           min    221 (+   70)  median    241 (+   84)  max    305 ns
+full capture: observer + tracer (known name)                 min   4562 (+ 4411)  median   5467 (+ 5311)  max  13031 ns
 
 == concurrency: 12 processes, same event (ETS row contention), small metadata
-baseline: no handlers                                              75 ns   +     0 ns
-reference: one no-op handler                                      121 ns   +    46 ns
-observer (per-scheduler striped rows)                             687 ns   +   612 ns
-tracer, name pre-suppressed                                       424 ns   +   349 ns
+baseline: no handlers                                        min     51 (+    0)  median     65 (+    0)  max     85 ns
+reference: one no-op handler                                 min     87 (+   37)  median     98 (+   33)  max    131 ns
+observer (per-scheduler striped rows)                        min    386 (+  335)  median    432 (+  367)  max    642 ns
+tracer, name pre-suppressed                                  min    264 (+  213)  median    330 (+  265)  max    401 ns
 
 == memory
 observer ETS after 200 events x 5 shapes: 596408 bytes (596.4 KB)
-after +100,000 events of an existing shape: 598264 bytes (growth 1856)
+after +100,000 events of an existing shape: 598400 bytes (growth 1992)

@@ -241,6 +241,7 @@ defmodule TeleScope.Catalog do
       observer:
         Map.take(capture.observations, [
           :status,
+          :error,
           :total_events,
           :dropped_events,
           :callback_errors,

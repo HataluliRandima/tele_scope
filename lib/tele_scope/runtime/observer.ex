@@ -180,8 +180,17 @@ defmodule TeleScope.Runtime.Observer do
       true ->
         n = :ets.update_counter(tab, {:shapes, event}, {2, 1}, {{:shapes, event}, 0})
 
-        if n <= cfg.max_shapes_per_event do
-          :ets.insert_new(tab, {shape_key, ms, md, attribution(), now})
+        cond do
+          n > cfg.max_shapes_per_event ->
+            :ok
+
+          :ets.insert_new(tab, {shape_key, ms, md, attribution(), now}) ->
+            :ok
+
+          true ->
+            # lost a race with another scheduler registering the same shape:
+            # don't let the race consume the per-event shape budget
+            :ets.update_counter(tab, {:shapes, event}, {2, -1})
         end
     end
 

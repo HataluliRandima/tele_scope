@@ -1,0 +1,7 @@
+OTP 26
+round 1: no-trace 305 ns | suppressed w/o gate +935 ns | with gate +857 ns | gate cost -77 ns
+round 2: no-trace 305 ns | suppressed w/o gate +767 ns | with gate +945 ns | gate cost 177 ns
+round 3: no-trace 305 ns | suppressed w/o gate +818 ns | with gate +589 ns | gate cost -229 ns
+round 4: no-trace 305 ns | suppressed w/o gate +689 ns | with gate +453 ns | gate cost -237 ns
+round 5: no-trace 305 ns | suppressed w/o gate +422 ns | with gate +476 ns | gate cost 54 ns
+median gate cost: -77 ns

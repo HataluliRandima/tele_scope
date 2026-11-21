@@ -115,7 +115,7 @@ flagged `wrapper_template` and are never used as evidence for other names.
 
 | Module | Responsibility |
 |---|---|
-| `Tracer` | Event-name discovery via call tracing. Backends: `:session` (OTP 27+, isolated `trace:session_create/3`, owned by the tracer process -> destroyed with it) and `:legacy` (OTP 26, `erlang:trace/3`, janitor removes patterns). `arity` flag + `{message, '$1'}` match spec => 14-16 word messages regardless of payload. Adaptive suppression via `not is_map_key('$1', {const, Known})` (O(1)), debounced re-install. Limits: duration, mailbox circuit breaker, messages, names. |
+| `Tracer` | (Updated in the pre-release audit: suppression is installed by a short-lived installer process; a trace-control-word gate bit in the match spec stops unknown-name messages within ~2 us under mailbox pressure; the message path is preloaded at start; one legacy tracer at a time.) Event-name discovery via call tracing. Backends: `:session` (OTP 27+, isolated `trace:session_create/3`, owned by the tracer process -> destroyed with it) and `:legacy` (OTP 26, `erlang:trace/3`, janitor removes patterns). `arity` flag + `{message, '$1'}` match spec => 14-16 word messages regardless of payload. Adaptive suppression via `not is_map_key('$1', {const, Known})` (O(1)), debounced re-install. Limits: duration, mailbox circuit breaker, messages, names. |
 | `Observer` | `:telemetry` handler (external capture, config = small key into `:persistent_term`). Hot path: stop-flag read, `:counters` add, optional sampling, `Shape.of_unsorted`, one `ets:update_counter` on a per-scheduler stripe. Slow path once per (shape, scheduler). Janitor detaches handlers and erases the config on `:kill`. Records `[:telemetry, :handler, :failure]`. |
 | `Shape` | key -> type tags. Structs keep only their module. Non-atom keys collapsed. Depth 1. Bounded by `max_keys`. |
 | `Handlers` | `list_handlers([])` normalisation (config type only), `call_count` invocation tracking (session-isolated on OTP 27+; janitor on OTP 26), shared-function detection. |
@@ -253,6 +253,9 @@ rule is reported in `catalog.config_errors` and never breaks discovery.
 | Handler config = **small key into `:persistent_term`** | Config map with ETS/counters refs | :telemetry copies the handler record from ETS on every execute; magic refs cost refcount traffic: +184 ns vs +56 ns with 12 emitters. Cost: one global literal-area scan when erased (once per observer). |
 | **Unsorted shape fold** on hot path | Sorted iterator | 30-key map: 2.3 us -> 0.56 us. Deterministic order for equal key sets. |
 | `process_info(Pid, {dictionary, '$initial_call'})` | `proc_lib:translate_initial_call/1` | The latter copies the whole dictionary of another process (privacy). |
+| **Async installer + TCW gate** (audit) | Synchronous re-install / debounce only | `trace_pattern` re-install takes 53-166 ms under load; a hot new name queued 128k-240k messages meanwhile. Gate close: ~2 us. |
+| **Preload the tracer's message path** (audit) | Lazy loading | First burst in a fresh VM: 7k-87k queued messages vs 12 after preloading. |
+| **Allowlisted debug-info backends** (audit) | Call the backend named in the file | The backend module is chosen by the (untrusted) `.beam` file. |
 | `telemetry_registry` declarations as an **extra source** | Primary mechanism | None of the 36 apps in the spike declare events; it requires adoption. |
 | `TeleScope` namespace | `TelemetryExplorer` (as suggested) | Matches the product name; the suggested structure is otherwise followed with adjustments (single `diagnostics.ex`, `catalog.ex`, `event_name.ex`, `rules/`). |
 | No LiveDashboard yet | Build UI | Discovery engine first (as instructed); the JSON report is the integration surface. |
