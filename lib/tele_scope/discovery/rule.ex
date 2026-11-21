@@ -37,7 +37,8 @@ defmodule TeleScope.Discovery.Rule do
           required(:kind) => kind(),
           required(:reason) => String.t(),
           optional(:app) => atom(),
-          optional(:emitted_by) => [module()]
+          optional(:emitted_by) => [module()],
+          optional(:optional_measurements) => [atom()]
         }
 
   @callback watched_calls() :: [mfa()]

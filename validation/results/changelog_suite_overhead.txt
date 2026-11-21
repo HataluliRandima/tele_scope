@@ -1,0 +1,7 @@
+baseline run1 wall=92.525479257
+capture run1 wall=84.530452786 Result: 1080 passed
+baseline run2 wall=73.067906754
+capture run2 wall=81.102185409 Result: 1080 passed
+baseline run3 wall=75.522994482
+capture run3 wall=76.102787524 Result: 1080 passed
+hexpm v2 exit=2

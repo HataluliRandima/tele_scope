@@ -1,0 +1,41 @@
+{
+ "summary": {
+  "events": 278,
+  "patterns": 28,
+  "spans": 48,
+  "by_status": {
+   "static_only": 274,
+   "referenced_only": 4
+  },
+  "by_confidence": {
+   "resolved": 119,
+   "literal": 148,
+   "referenced": 4,
+   "configured": 7
+  },
+  "patterns_by_class": {
+   "dynamic": 1,
+   "partial": 27
+  },
+  "unresolved_patterns": 4,
+  "wrapper_templates": 22
+ },
+ "environment": {
+  "otp_release": "29",
+  "elixir": "1.20.1",
+  "telemetry": "1.4.3"
+ },
+ "static_stats": {
+  "decoded": 94,
+  "candidates": 94,
+  "analyze_ms": 679,
+  "analyzed_modules": 111,
+  "beams": 4053,
+  "decode_failed": 0,
+  "index_ms": 765,
+  "indexed": 4053,
+  "total_ms": 1448,
+  "wrapper_mfas": 29,
+  "wrapper_rounds": 3
+ }
+}

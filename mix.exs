@@ -46,7 +46,7 @@ defmodule TeleScope.MixProject do
       # explicit allowlist: spike/, experiments/, bench/ and their results are
       # repository evidence, not part of the package
       files:
-        ~w(lib mix.exs README.md LICENSE CHANGELOG.md LIMITATIONS.md ARCHITECTURE.md BENCHMARKS.md SPIKE_RESULTS.md ROADMAP.md .formatter.exs)
+        ~w(lib mix.exs README.md LICENSE CHANGELOG.md LIMITATIONS.md ARCHITECTURE.md BENCHMARKS.md SPIKE_RESULTS.md ROADMAP.md VALIDATION.md .formatter.exs)
     ]
   end
 
@@ -61,6 +61,7 @@ defmodule TeleScope.MixProject do
         "BENCHMARKS.md",
         "SPIKE_RESULTS.md",
         "ROADMAP.md",
+        "VALIDATION.md",
         "CHANGELOG.md"
       ],
       groups_for_modules: [

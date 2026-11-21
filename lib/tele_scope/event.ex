@@ -59,7 +59,8 @@ defmodule TeleScope.Event do
             trace: nil,
             handlers: [],
             static_handlers: [],
-            metrics: []
+            metrics: [],
+            optional_measurements: []
 
   def new(name) do
     span =

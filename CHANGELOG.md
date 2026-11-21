@@ -16,6 +16,20 @@ audit (PRE_RELEASE_AUDIT.md).
 - `mix telemetry.explore` (`--runtime`, `--serve`, `--app`, `--metrics`,
   `--format json`) and `mix telemetry.check` (`--strict`).
 
+### Fixed during real-app validation (VALIDATION.md)
+- Telemetry.Metrics `measurement:` was ignored and a function in any option
+  discarded `event_name:` (21 false warnings on hexpm) (V1).
+- Rules can declare optional measurements; Ecto's `idle_time`,
+  `queue_time`, `decode_time` no longer produce warnings when absent (V2).
+- `consumer_without_emitter`: generic patterns (`[**, :start]`) no longer
+  hide missing emitters; consumers in dependencies are `info`, consumers in
+  the project's own apps are warnings (`:project_apps` option). This exposed
+  a real never-firing handler in plausible/analytics (V3).
+- "Did you mean" suggests span-naming slips such as
+  `[:oban, :notifier, :exception]` -> `[:oban, :notifier, :notify, :exception]` (V4).
+- Literal defaults of `Map.get/3`, `Keyword.get/3`, `Application.get_env/3`
+  (and Erlang equivalents) are evaluated as possible event names (V5).
+
 ### Fixed during the pre-release audit
 - Tracer: a burst of one new hot event could queue ~240k messages and trip
   the breaker. Suppression is now installed asynchronously, a trace-control

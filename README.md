@@ -22,6 +22,16 @@ It treats the absence of evidence carefully: an event that was not observed is
 reported as `:not_observed` (in a given window), never as non-existent, and an
 event without a handler is never reported as an error.
 
+## Validated on real applications
+
+On three open-source Phoenix codebases ([VALIDATION.md](https://github.com/HataluliRandima/tele_scope/blob/main/VALIDATION.md)):
+**91.1 %** (hexpm) and **100 %** (changelog.com) of the event names fired by
+their full test suites were predicted statically; static scans take about
+1 s for 2,600-4,000 modules; `mix telemetry.check --strict` produced no false
+warnings and found one real bug in plausible/analytics, a handler attached
+to `[:oban, :notifier, :exception]`, an event Oban never emits (it suggests
+`[:oban, :notifier, :notify, :exception]`).
+
 ## What it found in a fresh Phoenix + Ecto + Oban + Finch app
 
 From the spike ([spike/results](https://github.com/HataluliRandima/tele_scope/tree/main/spike/results), identical on OTP 26, 27 and 29):

@@ -41,6 +41,13 @@ fundamental to the approach and should stay documented after the MVP.
 
 ## Rules
 
+* Literal defaults of configurable getters (`Map.get(config, :event, [:lib,
+  :x])`) are reported as possible names. A deployment that configures a
+  different name will emit that name instead; the default is still listed.
+* `consumer_without_emitter` severity depends on `:project_apps` (the Mix
+  project's app or umbrella children by default). Outside Mix, every
+  consumer counts as the project's.
+
 * `Rules.Ecto`: prefixes changed in a repo's `init/2` callback, per-query
   `:telemetry_event` overrides and dynamically started repos with a different
   prefix are not covered. Repos must be listed in `:ecto_repos` or declare

@@ -105,17 +105,29 @@ defmodule TeleScope.Diagnostics do
   # -- consumers referencing unknown events -------------------------------------
 
   defp unknown_event_consumers(events, emitted, catalog) do
-    # fully dynamic patterns ([**]) and wrapper templates match almost
-    # anything; only specific partial patterns are evidence
+    # fully dynamic patterns ([**]), patterns without a known namespace
+    # ([**, :start]) and wrapper templates match almost anything; only
+    # specific partial patterns are evidence
     patterns = Catalog.specific_patterns(catalog)
 
     for e <- events, not Event.emitter_known?(e), reduce: [] do
       acc ->
         consumers =
-          Enum.map(e.metrics, &"metric #{&1.metric_name} (#{&1.location})") ++
-            Enum.map(e.static_handlers, &"handler #{inspect(&1.id)} (#{&1.location})") ++
-            Enum.map(e.handlers, &"runtime handler #{inspect(&1.id)}")
+          Enum.map(
+            e.metrics,
+            &{"metric #{&1.metric_name} (#{&1.location})", Catalog.consumer_app(catalog, &1)}
+          ) ++
+            Enum.map(
+              e.static_handlers,
+              &{"handler #{inspect(&1.id)} (#{&1.location})", Catalog.consumer_app(catalog, &1)}
+            ) ++
+            Enum.map(
+              e.handlers,
+              &{"runtime handler #{inspect(&1.id)}", Catalog.consumer_app(catalog, &1)}
+            )
 
+        project? = Enum.any?(consumers, fn {_, app} -> Catalog.project_app?(catalog, app) end)
+        dep_apps = consumers |> Enum.map(&elem(&1, 1)) |> Enum.reject(&is_nil/1) |> Enum.uniq()
         possible = Enum.filter(patterns, &EventName.matches?(&1.pattern, e.name))
         similar = similar_names(e.name, emitted)
 
@@ -125,8 +137,15 @@ defmodule TeleScope.Diagnostics do
               {:info,
                "may be emitted by a dynamic call site matching #{Enum.map_join(possible, ", ", &EventName.format(&1.pattern))}"}
 
-            true ->
+            project? ->
               {:warning, "no emitter found in scanned code" <> hint(similar)}
+
+            true ->
+              # a dependency's optional integration (e.g. Sentry attaching to
+              # Quantum events when Quantum is not installed) is not the
+              # project's bug
+              {:info,
+               "no emitter found; the consumer is in a dependency (#{Enum.map_join(dep_apps, ", ", &inspect/1)}), likely an optional integration"}
           end
 
         [
@@ -134,8 +153,8 @@ defmodule TeleScope.Diagnostics do
             :consumer_without_emitter,
             severity,
             e.name,
-            "#{EventName.format(e.name)} is consumed by #{Enum.join(consumers, ", ")} but #{why}",
-            %{similar: similar}
+            "#{EventName.format(e.name)} is consumed by #{consumers |> Enum.map(&elem(&1, 0)) |> Enum.join(", ")} but #{why}",
+            %{similar: similar, project_consumer: project?}
           )
           | acc
         ]
@@ -145,31 +164,69 @@ defmodule TeleScope.Diagnostics do
   defp hint([]), do: ""
   defp hint(similar), do: "; did you mean #{Enum.map_join(similar, " or ", &EventName.format/1)}?"
 
+  # Suggestions for a consumed-but-never-emitted name:
+  #   * near-identical spelling (Jaro >= 0.9) - typos like :order vs :orders
+  #   * same namespace and one name is a subsequence of the other with at most
+  #     two extra segments - span-naming slips such as
+  #     [:oban, :notifier, :exception] vs [:oban, :notifier, :notify, :exception]
+  #     (real-app validation, Plausible)
   defp similar_names(name, emitted) do
     dotted = EventName.dotted(name)
 
-    emitted
-    |> Enum.map(&{&1, String.jaro_distance(dotted, EventName.dotted(&1))})
-    |> Enum.filter(fn {_, score} -> score >= 0.9 end)
+    by_spelling =
+      for e <- emitted,
+          score = String.jaro_distance(dotted, EventName.dotted(e)),
+          score >= 0.9,
+          do: {e, score}
+
+    by_structure =
+      for e <- emitted,
+          hd(e) == hd(name),
+          abs(length(e) - length(name)) in 1..2,
+          subsequence?(name, e) or subsequence?(e, name),
+          do: {e, 0.85}
+
+    (by_spelling ++ by_structure)
+    |> Enum.uniq_by(&elem(&1, 0))
     |> Enum.sort_by(&elem(&1, 1), :desc)
     |> Enum.take(3)
     |> Enum.map(&elem(&1, 0))
   end
+
+  defp subsequence?([], _), do: true
+  defp subsequence?(_, []), do: false
+  defp subsequence?([a | as], [a | bs]), do: subsequence?(as, bs)
+  defp subsequence?(as, [_ | bs]), do: subsequence?(as, bs)
 
   defp metric_measurement_missing(events) do
     for e <- events,
         e.observed == true,
         map_size(e.measurements) > 0,
         m <- e.metrics,
+        # counters do not read a measurement; a function measurement
+        # (`measurement: &fun/1`) cannot be checked statically
         m.metric_type != :counter,
+        m.measurement != :custom,
         not Map.has_key?(e.measurements, m.measurement) do
-      d(
-        :metric_measurement_missing,
-        :warning,
-        e.name,
-        "Metric #{m.metric_name} reads measurement #{inspect(m.measurement)} which was never observed on #{EventName.format(e.name)} (seen: #{e.measurements |> Map.keys() |> Enum.map_join(", ", &inspect/1)})",
-        %{metric: m.metric_name}
-      )
+      seen = e.measurements |> Map.keys() |> Enum.map_join(", ", &inspect/1)
+
+      if m.measurement in e.optional_measurements do
+        d(
+          :metric_measurement_missing,
+          :info,
+          e.name,
+          "Metric #{m.metric_name} reads optional measurement #{inspect(m.measurement)}, which did not occur on #{EventName.format(e.name)} during this capture (seen: #{seen})",
+          %{metric: m.metric_name, optional: true}
+        )
+      else
+        d(
+          :metric_measurement_missing,
+          :warning,
+          e.name,
+          "Metric #{m.metric_name} reads measurement #{inspect(m.measurement)} which was never observed on #{EventName.format(e.name)} (seen: #{seen})",
+          %{metric: m.metric_name}
+        )
+      end
     end
   end
 

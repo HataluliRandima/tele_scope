@@ -58,7 +58,9 @@ decision or credentials and were deliberately not done by the audit.
 
 - [ ] CI (`.github/workflows/ci.yml`) green on GitHub, including the combinations never run locally
 - [ ] Tracer overhead re-measured on bare metal (BENCHMARKS budget "at risk")
-- [ ] Static + runtime validation on two real open-source Phoenix apps
-      (target from ROADMAP: >= 80 % of fired names predicted)
+- [x] Static + runtime validation on real open-source Phoenix apps
+      (VALIDATION.md): static on hexpm, changelog.com, plausible; runtime on
+      hexpm (91.1 %) and changelog.com (100 %), target >= 80 % met; 5 defects
+      found and fixed; plausible runtime not run (needs ClickHouse)
 - [ ] Re-run `mix telemetry.check --strict` and `--runtime --serve` on a fresh
       `mix phx.new` app with the released package (not a path dependency)

@@ -256,6 +256,8 @@ rule is reported in `catalog.config_errors` and never breaks discovery.
 | **Async installer + TCW gate** (audit) | Synchronous re-install / debounce only | `trace_pattern` re-install takes 53-166 ms under load; a hot new name queued 128k-240k messages meanwhile. Gate close: ~2 us. |
 | **Preload the tracer's message path** (audit) | Lazy loading | First burst in a fresh VM: 7k-87k queued messages vs 12 after preloading. |
 | **Allowlisted debug-info backends** (audit) | Call the backend named in the file | The backend module is chosen by the (untrusted) `.beam` file. |
+| Severity by **consumer ownership** (validation) | Severity by pattern evidence only | Plausible: a never-firing project handler was hidden by `[**, :exception]`; making such patterns non-evidence alone would flag Sentry's optional Quantum handlers in every app. |
+| Rules declare **optional measurements** (validation) | Warn on every missing measurement | Ecto's `idle_time` is absent under a SQL sandbox; a correct metric looked broken. |
 | `telemetry_registry` declarations as an **extra source** | Primary mechanism | None of the 36 apps in the spike declare events; it requires adoption. |
 | `TeleScope` namespace | `TelemetryExplorer` (as suggested) | Matches the product name; the suggested structure is otherwise followed with adjustments (single `diagnostics.ex`, `catalog.ex`, `event_name.ex`, `rules/`). |
 | No LiveDashboard yet | Build UI | Discovery engine first (as instructed); the JSON report is the integration surface. |

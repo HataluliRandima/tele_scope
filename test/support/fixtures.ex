@@ -74,7 +74,12 @@ defmodule TeleScope.Test.Fixtures do
   def catalog(app_dirs, opts \\ []) do
     TeleScope.scan(
       Keyword.merge(
-        [app_dirs: app_dirs, get_env: fn _ -> [] end],
+        [
+          app_dirs: app_dirs,
+          get_env: fn _ -> [] end,
+          # fixture apps are the "project" unless a test says otherwise
+          project_apps: Enum.map(app_dirs, &elem(&1, 0))
+        ],
         opts
       )
     )

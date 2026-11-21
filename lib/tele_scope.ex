@@ -34,6 +34,9 @@ defmodule TeleScope do
       or every loaded application's ebin outside of Mix)
     * `:rules` - rule modules (default `TeleScope.Discovery.Rule.default_rules/0`)
     * `:exclude_apps` - applications not to scan (default `[:tele_scope]`)
+    * `:project_apps` - the project's own applications (default: the Mix
+      project's app, or umbrella children). Consumers (handlers, metrics)
+      in other apps are treated as dependencies' optional integrations
     * `:get_env` - `fn app -> keyword end` used by configuration rules
       (default `Application.get_all_env/1`)
   """
@@ -58,9 +61,27 @@ defmodule TeleScope do
       implementations: fn behaviour -> Map.get(result.implementations, behaviour, []) end
     }
 
+    project_apps =
+      Keyword.get_lazy(opts, :project_apps, fn -> default_project_apps(app_dirs) end)
+
     Catalog.new()
     |> Catalog.add_static(result)
     |> Catalog.add_config_events(Rule.run_config(rules, config_ctx))
+    |> Catalog.put_project_apps(project_apps)
+  end
+
+  # The Mix project's own application(s), umbrella children included; nil
+  # (= treat every app as the project's) outside Mix.
+  defp default_project_apps(app_dirs) do
+    if Code.ensure_loaded?(Mix.Project) and Mix.Project.get() do
+      apps =
+        if Mix.Project.umbrella?(),
+          do: Mix.Project.apps_paths() |> Map.keys(),
+          else: [Mix.Project.config()[:app]]
+
+      scanned = MapSet.new(app_dirs, &elem(&1, 0))
+      if Enum.any?(apps, &MapSet.member?(scanned, &1)), do: apps, else: nil
+    end
   end
 
   @doc """
