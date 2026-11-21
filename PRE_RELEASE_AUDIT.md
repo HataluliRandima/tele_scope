@@ -20,7 +20,7 @@ Companion documents: [SECURITY_REVIEW.md](SECURITY_REVIEW.md),
 | Severity | Found | Fixed in this audit | Open |
 |---|---|---|---|
 | P0 release blocker | 2 | 2 | 0 |
-| P1 important | 8 | 7 | 1 (CI) |
+| P1 important | 8 | 7 (+1 partly: CI added, not yet run on GitHub) | 0 |
 | P2 improvement | 12 | 6 (+1 partly) | 5 (2 documented, 3 open) |
 | P3 optional | 7 | 2 | 5 (3 documented, 2 open) |
 
@@ -103,7 +103,7 @@ failure modes below. 30 randomized-seed runs: no flaky test.
 | P1-5 (R7) | Symbolic evaluation built the full cartesian product of segment alternatives *before* capping: exponential time/memory | `discovery/eval.ex` cons (92), `append/2` (164) | 6 segments x 10 alternatives: 1,196 ms, +137 MB; 8 segments would not finish | scanner hang/OOM in CI on legal (if unusual) code | **Fixed**: capped before the product; 8 x 10 now instant (test) |
 | P1-6 | Sensitive-key detection matched **substrings**: `author_id`, `passenger_count`, `compass_heading`, `bypass_cache`, `tokenizer_ms`, `classname` were warnings, so `--strict` CI failed on innocent keys. The first fix (segment list) introduced `otp` -> flagged Phoenix's `:otp_app`; caught by re-running the spike | `diagnostics.ex` `sensitive_key?/1` (38) | regex probe; spike report | false CI failures in every Phoenix app (`[:phoenix, :endpoint, :init]` carries `:otp_app`) | **Fixed**: whole-segment + pair matching, camelCase aware; both FP lists are regression tests; fresh Phoenix app `--runtime --strict` -> 0 warnings |
 | P1-7 | Benchmarks reported **minimum only**; tracer budget stated as met | `BENCHMARKS.md`, `bench/runtime_overhead.exs` | re-run with medians: tracer +0.7-1.5 us median vs "0.35-0.69 us" claimed | readers would under-estimate overhead | **Fixed**: min/median/max reported, budget marked "at risk" on OTP 27 medians, noisy rows annotated |
-| P1-8 | **No CI** in the repository; the version matrix only runs locally (`scripts/matrix.sh`) | repo root | no `.github/workflows` | contributors and users cannot see compatibility evidence; regressions such as the Elixir 1.15-only crash found in the spike would ship | **Open**: see RELEASE_CHECKLIST.md |
+| P1-8 | **No CI** in the repository; the version matrix only runs locally (`scripts/matrix.sh`) | repo root | no `.github/workflows` | contributors and users cannot see compatibility evidence; regressions such as the Elixir 1.15-only crash found in the spike would ship | **Partly fixed**: `.github/workflows/ci.yml` added and validated locally (actionlint clean; job scripts executed); must run green on GitHub before publishing |
 
 ## 4. P2 - improvements
 
@@ -168,8 +168,8 @@ gate pressure; benchmarks in CI with regression thresholds.
 **READY WITH CONDITIONS** for a public MVP published as a **pre-release**
 (`0.1.0-rc.1`):
 
-1. Add CI (GitHub Actions) running `scripts/matrix.sh`-equivalent jobs and
-   `mix hex.build`/`mix docs`; it must be green before publishing (P1-8).
+1. Push and confirm the added CI workflow (`.github/workflows/ci.yml`) is
+   green on GitHub before publishing (P1-8).
 2. Re-measure the tracer on bare metal; if medians exceed 1 us per call,
    state the measured range instead of the budget in README (P1-7 follow-up).
 3. Validate on at least two real open-source Phoenix applications (the

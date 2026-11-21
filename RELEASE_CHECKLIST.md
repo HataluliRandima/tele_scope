@@ -21,7 +21,7 @@ decision or credentials and were deliberately not done by the audit.
 - [x] Green on `:telemetry` 1.0.0 (1 documented skip), 1.1.0, 1.2.1, 1.3.0, 1.4.3
 - [x] Multi-node (`:peer`) test green (`mix test --include peer`)
 - [x] No flaky tests in 30 randomized-seed runs
-- [ ] **CI workflow** (GitHub Actions) running the matrix, `mix hex.build`, `mix docs` *(P1-8, blocker for publishing)*
+- [~] **CI workflow** `.github/workflows/ci.yml` added *(P1-8)*: test matrix (Elixir 1.15/26, 1.17/27, 1.18/27, 1.19/28, 1.20/29), telemetry 1.0.0-1.3.0, format/docs/hex.build, fresh-Phoenix smoke test. Validated locally: YAML + `actionlint` clean; the `quality`, `telemetry-versions` (1.0.0) and `phoenix-smoke` job scripts executed successfully; the `test` job equals the local matrix. **Not yet run on GitHub** - push and confirm green before publishing (Elixir 1.18/1.19 and OTP 28 were never run locally)
 - [ ] Mix task integration tests against a fixture project *(P2-8)*
 - [ ] Umbrella project, OTP 28, Elixir 1.16/1.18/1.19 *(P2-7)*
 
@@ -56,7 +56,7 @@ decision or credentials and were deliberately not done by the audit.
 
 ## F. Before promoting rc -> 0.1.0
 
-- [ ] CI green on the full matrix
+- [ ] CI (`.github/workflows/ci.yml`) green on GitHub, including the combinations never run locally
 - [ ] Tracer overhead re-measured on bare metal (BENCHMARKS budget "at risk")
 - [ ] Static + runtime validation on two real open-source Phoenix apps
       (target from ROADMAP: >= 80 % of fired names predicted)
