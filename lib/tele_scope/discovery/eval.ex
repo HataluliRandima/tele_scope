@@ -22,6 +22,17 @@ defmodule TeleScope.Discovery.Eval do
   alias TeleScope.EventName
 
   @max_alternatives 16
+
+  # getter(container_or_app, key, default) functions whose third argument is
+  # a default value
+  @default_getters [
+    {:"Elixir.Map", :get},
+    {:"Elixir.Keyword", :get},
+    {:"Elixir.Application", :get_env},
+    {:maps, :get},
+    {:proplists, :get_value},
+    {:application, :get_env}
+  ]
   @max_depth 4
 
   defstruct params: %{}, bindings: %{}, functions: %{}, depth: 0, seen: MapSet.new()
@@ -102,6 +113,15 @@ defmodule TeleScope.Discovery.Eval do
     end
   end
 
+  # Configurable names with a literal default, e.g. ExAws:
+  #   Map.get(config, :telemetry_event, [:ex_aws, :request])
+  # The default is what is emitted unless configured otherwise, so it is a
+  # possible name; configuration may override it, hence the extra unknown
+  # alternative (real-app validation, hexpm).
+  def list({:call, _, {:remote, _, {:atom, _, m}, {:atom, _, f}}, [_, _, default]}, env)
+      when {m, f} in @default_getters,
+      do: Enum.uniq(list(default, env) ++ [[{:splice, :unknown}]])
+
   # A branch that raises/throws/exits produces no value (audit R5: such a
   # branch used to add a spurious fully-dynamic alternative).
   def list({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, f}}, _args}, _env)
@@ -139,6 +159,10 @@ defmodule TeleScope.Discovery.Eval do
 
   @doc false
   def seg({:atom, _, a}, _env), do: [a]
+
+  def seg({:call, _, {:remote, _, {:atom, _, m}, {:atom, _, f}}, [_, _, default]}, env)
+      when {m, f} in @default_getters,
+      do: Enum.uniq(seg(default, env) ++ [{:var, :unknown}])
 
   def seg({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, f}}, _args}, _env)
       when f in [:error, :raise, :throw, :exit],

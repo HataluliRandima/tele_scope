@@ -26,7 +26,11 @@ defmodule TeleScope.Catalog do
             patterns: %{},
             static: nil,
             runtime: nil,
-            config_errors: []
+            config_errors: [],
+            # applications that belong to the project being analysed (nil when
+            # unknown, e.g. outside Mix); everything else is a dependency
+            project_apps: nil,
+            module_apps: %{}
 
   @type t :: %__MODULE__{}
 
@@ -68,7 +72,8 @@ defmodule TeleScope.Catalog do
 
     %{
       catalog
-      | static: %{
+      | module_apps: Map.merge(catalog.module_apps, result.modules),
+        static: %{
           stats: result.stats,
           no_debug_info: result.no_debug_info,
           errors: result.errors
@@ -117,7 +122,12 @@ defmodule TeleScope.Catalog do
     Enum.reduce(site.patterns, cat, fn pattern, cat ->
       if EventName.literal?(pattern) do
         upsert(cat, pattern, fn e ->
-          h = Map.merge(site.handler, %{location: CallSite.location(site), module: site.module})
+          h =
+            Map.merge(site.handler, %{
+              location: CallSite.location(site),
+              module: site.module,
+              app: site.app
+            })
 
           %{
             e
@@ -135,7 +145,12 @@ defmodule TeleScope.Catalog do
     Enum.reduce(site.patterns, cat, fn name, cat ->
       if EventName.valid_name?(name) do
         upsert(cat, name, fn e ->
-          m = Map.merge(site.extra, %{location: CallSite.location(site), module: site.module})
+          m =
+            Map.merge(site.extra, %{
+              location: CallSite.location(site),
+              module: site.module,
+              app: site.app
+            })
 
           %{
             e
@@ -205,6 +220,8 @@ defmodule TeleScope.Catalog do
               e
               | sources: MapSet.put(e.sources, :config_rule),
                 apps: put_app(e.apps, ev[:app]),
+                optional_measurements:
+                  Enum.uniq(e.optional_measurements ++ Map.get(ev, :optional_measurements, [])),
                 rule_reasons:
                   Enum.uniq([
                     %{rule: ev.rule, reason: ev.reason, emitted_by: Map.get(ev, :emitted_by, [])}
@@ -230,7 +247,8 @@ defmodule TeleScope.Catalog do
     |> add_runtime_handlers(
       capture.handlers_after,
       capture.invocations,
-      capture.shared_handler_functions
+      capture.shared_handler_functions,
+      Map.get(capture, :invocation_tracking_started_at, %{})
     )
     |> Map.put(:runtime, %{
       started_at: capture.started_at,
@@ -322,8 +340,9 @@ defmodule TeleScope.Catalog do
   end
 
   @doc false
-  def add_runtime_handlers(catalog, handlers, invocations, shared) do
+  def add_runtime_handlers(catalog, handlers, invocations, shared, tracked_at \\ %{}) do
     invocations = invocations || %{}
+    tracked_at = tracked_at || %{}
 
     Enum.reduce(handlers, catalog, fn h, cat ->
       mfa = h.function.mfa
@@ -332,6 +351,9 @@ defmodule TeleScope.Catalog do
         h
         |> Map.take([:id, :function, :config_type])
         |> Map.put(:invocations, Map.get(invocations, mfa))
+        # when invocation counting started for this function (ms); a handler
+        # picked up mid-capture cannot have counted earlier occurrences
+        |> Map.put(:tracked_since, Map.get(tracked_at, mfa))
         |> Map.put(:invocations_shared_with, Map.get(shared || %{}, mfa, []) -- [h.id])
         # call_count is per function: only attributable to this handler id
         # when no other handler id uses the same function
@@ -368,11 +390,39 @@ defmodule TeleScope.Catalog do
   Specific partial patterns: non-template patterns with at least one known
   segment. Used to decide whether an unknown name *might* be emitted.
   """
+  #
+  # A specific pattern also needs a known *first* segment: event names are
+  # namespaced by library, so `[:bandit, *, :stop]` is evidence for a Bandit
+  # event while `[**, :start]` matches every span in the ecosystem (real-app
+  # validation: it hid a never-firing handler in Plausible).
   def specific_patterns(catalog),
     do:
       catalog.patterns
       |> Map.values()
-      |> Enum.filter(&(&1.classification == :partial and not &1.wrapper_template))
+      |> Enum.filter(fn p ->
+        p.classification == :partial and not p.wrapper_template and
+          match?([first | _] when is_atom(first), p.pattern)
+      end)
+
+  @doc """
+  The application a consumer belongs to (static sites carry it; runtime
+  handlers are looked up by their function's module). nil when unknown.
+  """
+  def consumer_app(_catalog, %{app: app}) when app != nil, do: app
+
+  def consumer_app(catalog, %{function: %{module: mod}}) when is_atom(mod),
+    do: Map.get(catalog.module_apps, mod)
+
+  def consumer_app(_catalog, _consumer), do: nil
+
+  @doc "Is `app` part of the project (true when project apps are unknown)?"
+  def project_app?(%__MODULE__{project_apps: nil}, _app), do: true
+  def project_app?(_catalog, nil), do: true
+  def project_app?(%__MODULE__{project_apps: apps}, app), do: MapSet.member?(apps, app)
+
+  @doc "Sets the project's own applications."
+  def put_project_apps(catalog, nil), do: catalog
+  def put_project_apps(catalog, apps), do: %{catalog | project_apps: MapSet.new(apps)}
 
   @doc "Span groups: `%{prefix => %{start: bool, stop: bool, exception: bool}}`."
   def spans(catalog) do

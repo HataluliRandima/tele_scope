@@ -101,7 +101,7 @@ defmodule TeleScope.PipelineTest do
     assert {:inactive_handler, :info, [:pipe, :never]} in checks
     assert {:metric_measurement_missing, :warning, [:pipe, :order]} in checks
     typo = Enum.find(diags, &(&1.event == [:pipe, :ordr]))
-    assert typo.message =~ "did you mean [:pipe, :order]"
+    assert typo.suggestion =~ "Did you mean [:pipe, :order]"
     # an event without handlers is never an error
     refute Enum.any?(diags, &(&1.check == :no_runtime_handler and &1.severity != :info))
 

@@ -335,42 +335,70 @@ defmodule TeleScope.Discovery.Analyzer do
   # ---- Telemetry.Metrics definitions --------------------------------------
 
   defp metric(fun, [name_expr | rest], anno, ctx, acc) do
-    opts =
-      case rest do
-        [opts_expr] ->
-          case Eval.literal(opts_expr) do
-            {:ok, opts} when is_list(opts) -> opts
-            _ -> []
-          end
+    # Options are read key by key: a single non-literal option (for example
+    # `measurement: &__MODULE__.count/1`) must not discard the others
+    # (real-app validation, hexpm: 21 false metric_measurement_missing).
+    opts = keyword_entries(rest)
 
-        [] ->
-          []
-      end
+    with {:ok, full} when length(full) >= 2 <- metric_name(name_expr),
+         {:ok, event} <- metric_event(opts, full, ctx) do
+      site = %{
+        base_site(:metric, anno, ctx)
+        | patterns: [event],
+          extra: %{
+            metric_type: fun,
+            metric_name: Enum.map_join(full, ".", &Atom.to_string/1),
+            measurement: metric_measurement(opts, full),
+            unit: literal_opt(opts, :unit, nil),
+            tags: literal_opt(opts, :tags, [])
+          }
+      }
 
-    case metric_name(name_expr) do
-      {:ok, full} when length(full) >= 2 ->
-        {event, measurement} =
-          case Keyword.get(opts, :event_name) do
-            ev when is_list(ev) and ev != [] -> {ev, List.last(full)}
-            _ -> {Enum.drop(full, -1), List.last(full)}
-          end
+      add_site(site, acc)
+    else
+      _ -> acc
+    end
+  end
 
-        site = %{
-          base_site(:metric, anno, ctx)
-          | patterns: [event],
-            extra: %{
-              metric_type: fun,
-              metric_name: Enum.map_join(full, ".", &Atom.to_string/1),
-              measurement: measurement,
-              unit: Keyword.get(opts, :unit),
-              tags: Keyword.get(opts, :tags, [])
-            }
-        }
+  defp keyword_entries([opts_expr]), do: keyword_entries(opts_expr, [])
+  defp keyword_entries(_), do: []
 
-        add_site(site, acc)
+  defp keyword_entries({:cons, _, {:tuple, _, [{:atom, _, key}, value]}, tail}, acc),
+    do: keyword_entries(tail, [{key, value} | acc])
 
-      _ ->
-        acc
+  defp keyword_entries(_other, acc), do: Enum.reverse(acc)
+
+  # `event_name:` overrides the name-derived event. When it is present but
+  # cannot be resolved, the event is unknown: never fall back to the name.
+  defp metric_event(opts, full, ctx) do
+    case List.keyfind(opts, :event_name, 0) do
+      nil ->
+        {:ok, Enum.drop(full, -1)}
+
+      {:event_name, expr} ->
+        case Eval.name(expr, ctx.env) do
+          [event] -> if EventName.literal?(event), do: {:ok, event}, else: :error
+          _ -> :error
+        end
+    end
+  end
+
+  # `measurement:` may be an atom or a function; a function is :custom and is
+  # never checked against observed keys.
+  defp metric_measurement(opts, full) do
+    case List.keyfind(opts, :measurement, 0) do
+      nil -> List.last(full)
+      {:measurement, {:atom, _, m}} -> m
+      {:measurement, _} -> :custom
+    end
+  end
+
+  defp literal_opt(opts, key, default) do
+    with {^key, expr} <- List.keyfind(opts, key, 0),
+         {:ok, value} <- Eval.literal(expr) do
+      value
+    else
+      _ -> default
     end
   end
 

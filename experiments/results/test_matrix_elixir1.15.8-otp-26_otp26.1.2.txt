@@ -1,5 +1,5 @@
 Resolving Hex dependencies...
-Resolution completed in 0.059s
+Resolution completed in 0.058s
 Unchanged:
   earmark_parser 1.4.46
   ex_doc 0.40.5
@@ -9,12 +9,13 @@ Unchanged:
   nimble_parsec 1.4.2
   telemetry 1.4.3
 All dependencies are up to date
-Compiling 2 files (.ex)
+Compiling 9 files (.ex)
+Compiling 3 files (.ex)
 Excluding tags: [:bench]
 Including tags: [:peer]
 
-....................................................................................................
-Finished in 5.3 seconds (0.8s async, 4.5s sync)
-2 doctests, 98 tests, 0 failures
+...........................................................................................................
+Finished in 9.3 seconds (1.9s async, 7.4s sync)
+2 doctests, 105 tests, 0 failures
 
-Randomized with seed 713873
+Randomized with seed 542817

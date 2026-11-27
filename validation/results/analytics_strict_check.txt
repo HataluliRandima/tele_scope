@@ -1,0 +1,2 @@
+[warning] consumer_without_emitter: [:oban, :notifier, :exception] is consumed by handler "oban-errors" (lib/plausible/application.ex:385) but no emitter found in scanned code; did you mean [:oban, :notifier, :notify, :exception]?
+0 error(s), 1 warning(s), 9 info

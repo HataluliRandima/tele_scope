@@ -46,6 +46,13 @@ defmodule TeleScope.Discovery.Scanner do
     concurrency = Keyword.get(opts, :max_concurrency, System.schedulers_online())
     t0 = System.monotonic_time()
 
+    # a configured directory that does not exist is reported, not ignored:
+    # an empty scan must never look like "this app emits nothing"
+    missing_dirs =
+      for {app, dir} <- app_dirs,
+          not File.dir?(dir),
+          do: %{app: app, path: dir, reason: :missing_directory}
+
     beams =
       for {app, dir} <- app_dirs,
           path <- Path.wildcard(Path.join(dir, "*.beam")),
@@ -94,7 +101,8 @@ defmodule TeleScope.Discovery.Scanner do
       for {mod, %{error: err}} <- analyses, do: %{module: mod, reason: {:analysis_failed, err}}
 
     errors =
-      Enum.map(index_errors, fn {:error, info} -> info end) ++
+      missing_dirs ++
+        Enum.map(index_errors, fn {:error, info} -> info end) ++
         analysis_errors ++
         for {mod, {:error, reason}} <- forms_cache.status,
             reason != :no_debug_info,
@@ -277,9 +285,11 @@ defmodule TeleScope.Discovery.Scanner do
     templates |> Map.keys() |> Map.new(fn {m, _, _} -> {m, true} end)
   end
 
+  # ordered: results (and therefore reports and diagnostics) must not depend
+  # on which task finishes first
   defp parallel(items, concurrency, fun) do
     items
-    |> Task.async_stream(fun, max_concurrency: concurrency, ordered: false, timeout: :infinity)
+    |> Task.async_stream(fun, max_concurrency: concurrency, ordered: true, timeout: :infinity)
     |> Enum.map(fn {:ok, r} -> r end)
   end
 

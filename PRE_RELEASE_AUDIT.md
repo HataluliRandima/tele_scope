@@ -172,8 +172,8 @@ gate pressure; benchmarks in CI with regression thresholds.
    green on GitHub before publishing (P1-8).
 2. Re-measure the tracer on bare metal; if medians exceed 1 us per call,
    state the measured range instead of the budget in README (P1-7 follow-up).
-3. Validate on at least two real open-source Phoenix applications (the
-   83.5 % figure comes from one fixture app).
+3. ~~Validate on at least two real open-source Phoenix applications~~ Done:
+   VALIDATION.md (91.1 % and 100 % recall; 5 defects found and fixed).
 4. Then promote to `0.1.0`, tag `v0.1.0`, publish docs.
 
 Not blocking an rc: P2-5 to P2-8. Blocking 1.0: P2-5 (API boundary) and

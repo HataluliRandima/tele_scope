@@ -44,7 +44,11 @@ defmodule TeleScope.Discovery.Rules.Ecto do
         app: app,
         reason: "Ecto query event for #{inspect(repo)} (#{how})",
         emitted_by: [Ecto.Adapters.SQL],
-        subject: repo
+        subject: repo,
+        # documented as optional by Ecto: present only when applicable (e.g.
+        # idle_time only for connections that were idle). Never present under
+        # a SQL sandbox (real-app validation, hexpm).
+        optional_measurements: [:idle_time, :queue_time, :decode_time]
       }
     end)
   end

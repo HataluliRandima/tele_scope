@@ -1,5 +1,5 @@
 Resolving Hex dependencies...
-Resolution completed in 0.087s
+Resolution completed in 0.091s
 Unchanged:
   earmark_parser 1.4.46
   ex_doc 0.40.5
@@ -9,7 +9,8 @@ Unchanged:
   nimble_parsec 1.4.2
   telemetry 1.4.3
 All dependencies have been fetched
-Compiling 1 file (.ex)
+Compiling 9 files (.ex)
+Compiling 3 files (.ex)
 warning: the following files do not match any of the configured `:test_load_filters` / `:test_ignore_filters`:
 
 test/audit/repro.exs
@@ -18,11 +19,11 @@ This might indicate a typo in a test file name (for example, using "foo_tests.ex
 
 See the configuration for `:test_pattern` under `mix help test` for more information.
 
-Running ExUnit with seed: 369638, max_cases: 24
+Running ExUnit with seed: 329941, max_cases: 24
 Excluding tags: [:bench]
 Including tags: [:peer]
 
-....................................................................................................
-Finished in 5.7 seconds (0.9s async, 4.8s sync)
+...........................................................................................................
+Finished in 6.2 seconds (0.7s async, 5.4s sync)
 
-Result: 100 passed (2 doctests, 98 tests)
+Result: 107 passed (2 doctests, 105 tests)

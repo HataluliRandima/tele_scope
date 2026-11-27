@@ -37,7 +37,8 @@ defmodule TeleScope.Discovery.Rule do
           required(:kind) => kind(),
           required(:reason) => String.t(),
           optional(:app) => atom(),
-          optional(:emitted_by) => [module()]
+          optional(:emitted_by) => [module()],
+          optional(:optional_measurements) => [atom()]
         }
 
   @callback watched_calls() :: [mfa()]
@@ -59,6 +60,9 @@ defmodule TeleScope.Discovery.Rule do
         rescue
           e ->
             [%{rule: rule, error: Exception.message(e)}]
+        catch
+          kind, reason ->
+            [%{rule: rule, error: Exception.format_banner(kind, reason)}]
         end
       else
         []

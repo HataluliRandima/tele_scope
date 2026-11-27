@@ -19,7 +19,9 @@ defmodule TeleScope.MixProject do
       docs: docs(),
       source_url: @source_url,
       homepage_url: @source_url,
-      test_coverage: [summary: [threshold: 0]]
+      test_coverage: [summary: [threshold: 0]],
+      # test/audit/repro.exs is a script (`mix run`), not a test file
+      test_ignore_filters: [~r/test_helper\.exs$/, ~r{^test/audit/}]
     ]
   end
 
@@ -46,7 +48,7 @@ defmodule TeleScope.MixProject do
       # explicit allowlist: spike/, experiments/, bench/ and their results are
       # repository evidence, not part of the package
       files:
-        ~w(lib mix.exs README.md LICENSE CHANGELOG.md LIMITATIONS.md ARCHITECTURE.md BENCHMARKS.md SPIKE_RESULTS.md ROADMAP.md .formatter.exs)
+        ~w(lib mix.exs README.md LICENSE CHANGELOG.md DIAGNOSTICS.md LIMITATIONS.md ARCHITECTURE.md BENCHMARKS.md SPIKE_RESULTS.md ROADMAP.md VALIDATION.md .formatter.exs)
     ]
   end
 
@@ -56,15 +58,30 @@ defmodule TeleScope.MixProject do
       source_ref: "v#{@version}",
       extras: [
         "README.md",
-        "ARCHITECTURE.md",
+        "DIAGNOSTICS.md",
         "LIMITATIONS.md",
+        "ARCHITECTURE.md",
         "BENCHMARKS.md",
+        "VALIDATION.md",
         "SPIKE_RESULTS.md",
         "ROADMAP.md",
+        "CONTRIBUTING.md",
         "CHANGELOG.md"
       ],
+      groups_for_extras: [
+        Guides: ["README.md", "DIAGNOSTICS.md", "LIMITATIONS.md"],
+        Design: ["ARCHITECTURE.md", "BENCHMARKS.md", "VALIDATION.md", "SPIKE_RESULTS.md"],
+        Project: ["ROADMAP.md", "CONTRIBUTING.md", "CHANGELOG.md"]
+      ],
       groups_for_modules: [
-        API: [TeleScope, TeleScope.Catalog, TeleScope.Event, TeleScope.EventName],
+        API: [
+          TeleScope,
+          TeleScope.Catalog,
+          TeleScope.Event,
+          TeleScope.EventName,
+          TeleScope.CaptureError
+        ],
+        "Mix tasks": [Mix.Tasks.Telemetry.Explore, Mix.Tasks.Telemetry.Check],
         "Diagnostics & metrics": [TeleScope.Diagnostics, TeleScope.Metrics],
         Reporters: [TeleScope.Reporters.Console, TeleScope.Reporters.JSON],
         "Discovery rules": [

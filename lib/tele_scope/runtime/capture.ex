@@ -34,11 +34,16 @@ defmodule TeleScope.Runtime.Capture do
   @doc "Blocks until the capture finishes (or is stopped) and returns the result."
   def await(pid, timeout \\ :infinity), do: GenServer.call(pid, :await, timeout)
 
-  @doc "Stops early and returns the result."
+  @doc """
+  Stops early and returns the result, or `{:error, :not_running}` when the
+  capture process no longer exists (already stopped, or its owner died).
+  """
   def stop(pid) do
     res = GenServer.call(pid, :stop, 60_000)
     GenServer.stop(pid)
     res
+  catch
+    :exit, _ -> {:error, :not_running}
   end
 
   @impl true
@@ -64,8 +69,25 @@ defmodule TeleScope.Runtime.Capture do
     events = Enum.filter(opts[:events], &TeleScope.EventName.valid_name?/1)
 
     with {:ok, observer} <-
-           Observer.start(Keyword.merge([events: events, duration: :infinity], opts[:observer])),
-         {:ok, tracer} <- maybe_tracer(opts, events, duration) do
+           Observer.start(Keyword.merge([events: events, duration: :infinity], opts[:observer])) do
+      # The tracer is optional: when the VM refuses it (another legacy
+      # tracer on OTP 26, no trace sessions) the capture continues with the
+      # observer only and reports why (diagnostic TS011). Invalid tracer
+      # options are a caller error and still fail the start.
+      {tracer, tracer_error} =
+        case maybe_tracer(opts, events, duration) do
+          {:ok, tracer} ->
+            {tracer, nil}
+
+          {:error, reason} when elem(reason, 0) in [:invalid_option, :duration_too_long] ->
+            GenServer.stop(observer)
+            throw({:invalid_tracer_option, reason})
+
+          {:error, reason} ->
+            {nil, reason}
+        end
+
+      tracer_ref = tracer && Process.monitor(tracer)
       handlers = Handlers.list()
       tracker = if opts[:track_handlers], do: Handlers.track(handlers)
 
@@ -79,6 +101,8 @@ defmodule TeleScope.Runtime.Capture do
          observer_ref: Process.monitor(observer),
          observer_error: nil,
          tracer: tracer,
+         tracer_ref: tracer_ref,
+         tracer_error: tracer_error,
          tracker: tracker,
          handlers_before: handlers,
          waiters: [],
@@ -88,8 +112,10 @@ defmodule TeleScope.Runtime.Capture do
          started_at: System.system_time(:millisecond)
        }}
     else
-      {:error, reason} -> {:stop, reason}
+      {:error, reason} -> {:stop, {:observer_failed, reason}}
     end
+  catch
+    {:invalid_tracer_option, reason} -> {:stop, reason}
   end
 
   defp maybe_tracer(opts, events, duration) do
@@ -131,6 +157,11 @@ defmodule TeleScope.Runtime.Capture do
     {:noreply, %{state | observer_error: reason}}
   end
 
+  def handle_info({:DOWN, ref, :process, _, reason}, %{tracer_ref: ref, result: nil} = state)
+      when reason != :normal do
+    {:noreply, %{state | tracer_error: {:tracer_crashed, reason}}}
+  end
+
   def handle_info(:finish, state), do: {:noreply, finish(state)}
 
   def handle_info(:refresh_handlers, %{result: nil, tracker: tracker} = state) do
@@ -167,8 +198,9 @@ defmodule TeleScope.Runtime.Capture do
     # a failed tracer must not lose the observer's results
     {trace, trace_error} =
       case state.tracer && Tracer.stop(state.tracer) do
-        nil -> {nil, nil}
+        nil -> {nil, state.tracer_error}
         %{} = res -> {res, nil}
+        {:error, :not_running} -> {nil, state.tracer_error || :tracer_stopped_unexpectedly}
         error -> {nil, error}
       end
 

@@ -22,7 +22,8 @@ decision or credentials and were deliberately not done by the audit.
 - [x] Multi-node (`:peer`) test green (`mix test --include peer`)
 - [x] No flaky tests in 30 randomized-seed runs
 - [~] **CI workflow** `.github/workflows/ci.yml` added *(P1-8)*: test matrix (Elixir 1.15/26, 1.17/27, 1.18/27, 1.19/28, 1.20/29), telemetry 1.0.0-1.3.0, format/docs/hex.build, fresh-Phoenix smoke test. Validated locally: YAML + `actionlint` clean; the `quality`, `telemetry-versions` (1.0.0) and `phoenix-smoke` job scripts executed successfully; the `test` job equals the local matrix. **Not yet run on GitHub** - push and confirm green before publishing (Elixir 1.18/1.19 and OTP 28 were never run locally)
-- [ ] Mix task integration tests against a fixture project *(P2-8)*
+- [x] Mix task integration tests against a generated fixture project *(P2-8)*: `test/integration/cli_test.exs` (exit codes 0/1/2, strict mode, JSON on stdout, `--runtime`), run in CI with `--include integration`
+- [x] Diagnostic codes are stable and documented (`DIAGNOSTICS.md`; a test fails if a code is undocumented or renumbered)
 - [ ] Umbrella project, OTP 28, Elixir 1.16/1.18/1.19 *(P2-7)*
 
 ## C. Packaging (Hex)
@@ -31,6 +32,7 @@ decision or credentials and were deliberately not done by the audit.
 - [x] `mix hex.build` succeeds; package contains only `lib/`, `mix.exs`, docs
 - [x] `LICENSE` present (MIT, matches `package.licenses`)
 - [x] `CHANGELOG.md`
+- [x] `CONTRIBUTING.md`
 - [x] Version `0.1.0-rc.1`
 - [x] Package name `tele_scope` available on hex.pm (checked: "No package with name tele_scope")
 - [x] Only runtime dependency `:telemetry ~> 1.0`; `:ex_doc` dev-only
@@ -58,7 +60,9 @@ decision or credentials and were deliberately not done by the audit.
 
 - [ ] CI (`.github/workflows/ci.yml`) green on GitHub, including the combinations never run locally
 - [ ] Tracer overhead re-measured on bare metal (BENCHMARKS budget "at risk")
-- [ ] Static + runtime validation on two real open-source Phoenix apps
-      (target from ROADMAP: >= 80 % of fired names predicted)
+- [x] Static + runtime validation on real open-source Phoenix apps
+      (VALIDATION.md): static on hexpm, changelog.com, plausible; runtime on
+      hexpm (91.1 %) and changelog.com (100 %), target >= 80 % met; 5 defects
+      found and fixed; plausible runtime not run (needs ClickHouse)
 - [ ] Re-run `mix telemetry.check --strict` and `--runtime --serve` on a fresh
       `mix phx.new` app with the released package (not a path dependency)

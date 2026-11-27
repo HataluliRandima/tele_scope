@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Validation shim: run psql inside the throwaway Postgres container.
+# `--file PATH` (a host path) is sent over stdin instead.
+args=(); file=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --file|-f) file="$2"; shift 2 ;;
+    --file=*) file="${1#--file=}"; shift ;;
+    -h|--host|-p|--port) shift 2 ;;            # connect via the container's local socket
+    --host=*|--port=*) shift ;;
+    *) args+=("$1"); shift ;;
+  esac
+done
+envs=(-e PGPASSWORD="${PGPASSWORD:-postgres}")
+if [ -n "$file" ]; then
+  exec docker exec -i "${envs[@]}" telescope-validation-pg psql "${args[@]}" < "$file"
+else
+  exec docker exec -i "${envs[@]}" telescope-validation-pg psql "${args[@]}"
+fi
