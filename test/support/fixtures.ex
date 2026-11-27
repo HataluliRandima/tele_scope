@@ -26,24 +26,39 @@ defmodule TeleScope.Test.Fixtures do
   """
   def compile_elixir(source, dir, opts \\ []) do
     debug = Keyword.get(opts, :debug_info, true)
-    previous = Code.get_compiler_option(:debug_info)
-    ignore = Code.get_compiler_option(:ignore_module_conflict)
 
-    try do
-      Code.put_compiler_option(:debug_info, debug)
-      Code.put_compiler_option(:ignore_module_conflict, true)
+    # Compiler options are global to the VM. Async test modules compile
+    # fixtures concurrently, so without the lock one module's
+    # `debug_info: false` leaks into another's compilation (fixtures silently
+    # lose their debug info and static analysis finds nothing in them).
+    modules =
+      with_compiler_lock(fn ->
+        previous = Code.get_compiler_option(:debug_info)
+        ignore = Code.get_compiler_option(:ignore_module_conflict)
 
-      {modules, _diagnostics} =
-        Code.with_diagnostics(fn -> Code.compile_string(source, "fixture.ex") end)
+        try do
+          Code.put_compiler_option(:debug_info, debug)
+          Code.put_compiler_option(:ignore_module_conflict, true)
 
-      for {mod, bin} <- modules do
-        File.write!(Path.join(dir, "#{mod}.beam"), bin)
-        mod
-      end
-    after
-      Code.put_compiler_option(:debug_info, previous)
-      Code.put_compiler_option(:ignore_module_conflict, ignore)
+          {modules, _diagnostics} =
+            Code.with_diagnostics(fn -> Code.compile_string(source, "fixture.ex") end)
+
+          modules
+        after
+          Code.put_compiler_option(:debug_info, previous)
+          Code.put_compiler_option(:ignore_module_conflict, ignore)
+        end
+      end)
+
+    for {mod, bin} <- modules do
+      File.write!(Path.join(dir, "#{mod}.beam"), bin)
+      mod
     end
+  end
+
+  # Local lock only: [node()] keeps peer nodes out of it.
+  defp with_compiler_lock(fun) do
+    :global.trans({__MODULE__.CompilerLock, self()}, fun, [node()])
   end
 
   @doc "Compiles Erlang `source` (one module) into `dir`."

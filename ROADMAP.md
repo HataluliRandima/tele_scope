@@ -50,6 +50,22 @@ Exit criteria for 0.1:
   term to link runtime names to the emitting function. Measure the cost first,
   and remember tail calls hide callers.
 * Schema drift between two captures (`mix telemetry.diff a.json b.json`).
+* **Committed event baseline** (candidate; build it if users report the
+  problem). `mix telemetry.check --baseline telemetry.lock.json` compares
+  the current build with a snapshot kept in the repository. It catches the
+  one regression the check cannot see today: an event that is removed or
+  renamed while its consumers live *outside* the code base (Grafana or
+  Datadog dashboards, Prometheus alerts). Nothing in the code references
+  such an event, so TS002 stays silent and the dashboard just goes empty.
+  Constraints:
+  * snapshot static data only (event names and emitter locations), never
+    runtime shapes, which depend on which code paths ran and would make
+    the check flaky;
+  * only a disappeared event fails the check; new events are reported as
+    info;
+  * opt-in: without `--baseline`, behaviour is unchanged;
+  * a `--update-baseline` flag, with the diff printed, so updating the
+    file is a reviewed change rather than a reflex.
 
 ## 0.3 - integrations
 
