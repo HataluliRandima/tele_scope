@@ -60,6 +60,9 @@ defmodule TeleScope.Discovery.Rule do
         rescue
           e ->
             [%{rule: rule, error: Exception.message(e)}]
+        catch
+          kind, reason ->
+            [%{rule: rule, error: Exception.format_banner(kind, reason)}]
         end
       else
         []

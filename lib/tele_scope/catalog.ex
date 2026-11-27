@@ -247,7 +247,8 @@ defmodule TeleScope.Catalog do
     |> add_runtime_handlers(
       capture.handlers_after,
       capture.invocations,
-      capture.shared_handler_functions
+      capture.shared_handler_functions,
+      Map.get(capture, :invocation_tracking_started_at, %{})
     )
     |> Map.put(:runtime, %{
       started_at: capture.started_at,
@@ -339,8 +340,9 @@ defmodule TeleScope.Catalog do
   end
 
   @doc false
-  def add_runtime_handlers(catalog, handlers, invocations, shared) do
+  def add_runtime_handlers(catalog, handlers, invocations, shared, tracked_at \\ %{}) do
     invocations = invocations || %{}
+    tracked_at = tracked_at || %{}
 
     Enum.reduce(handlers, catalog, fn h, cat ->
       mfa = h.function.mfa
@@ -349,6 +351,9 @@ defmodule TeleScope.Catalog do
         h
         |> Map.take([:id, :function, :config_type])
         |> Map.put(:invocations, Map.get(invocations, mfa))
+        # when invocation counting started for this function (ms); a handler
+        # picked up mid-capture cannot have counted earlier occurrences
+        |> Map.put(:tracked_since, Map.get(tracked_at, mfa))
         |> Map.put(:invocations_shared_with, Map.get(shared || %{}, mfa, []) -- [h.id])
         # call_count is per function: only attributable to this handler id
         # when no other handler id uses the same function

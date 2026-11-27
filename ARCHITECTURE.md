@@ -124,12 +124,16 @@ flagged `wrapper_template` and are never used as evidence for other names.
 ### 3.3 Catalog, diagnostics, metrics, reporters
 
 * `TeleScope.Catalog` - see the data model below.
-* `TeleScope.Diagnostics` - `handler_failure` (error), `consumer_without_emitter`
-  (warning, with "did you mean" by Jaro distance; downgraded to info only when a
-  *specific* partial pattern could emit it), `metric_measurement_missing`,
-  `sensitive_key`, `inactive_handler`, `no_runtime_handler` (info),
-  `schema_drift` (info: optional, nullable, multi-typed keys), `incomplete_span`,
-  `unresolved_call_site`, `no_debug_info`, `capture_limited`.
+* `TeleScope.Diagnostics` - a registry of definitions with stable codes
+  (`TS001`-`TS013`, see [DIAGNOSTICS.md](DIAGNOSTICS.md)) and one pure
+  function per check. Every diagnostic carries code, severity, title,
+  message, suggestion, locations and check-specific detail; `limitation:
+  true` marks coverage notes (`no_debug_info` for dependencies,
+  `capture_limited`, `scan_error`), which are always `:info`.
+  `evaluate/2` turns diagnostics into a pass/fail verdict (`--strict` adds
+  warnings; limitations never fail). Output is sorted deterministically,
+  and the scanner keeps task results ordered so repeated scans produce
+  identical reports.
 * `TeleScope.Metrics` - see section 6.
 * Reporters - console text and JSON (schema version 1, own encoder: Elixir's
   `JSON` only exists from 1.18).

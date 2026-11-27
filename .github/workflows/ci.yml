@@ -55,10 +55,14 @@ jobs:
           restore-keys: |
             mix-test-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
 
+      # :telemetry is a rebar3 package; install the build tools explicitly
+      # instead of relying on Mix prompting for them
+      - run: mix local.hex --force && mix local.rebar --force
       - run: mix deps.get
       - run: mix compile --warnings-as-errors
       # --include peer: the multi-node test (stdio :peer, no epmd needed)
-      - run: mix test --include peer
+      # --include integration: runs the mix tasks against a generated project
+      - run: mix test --include peer --include integration --warnings-as-errors
 
   telemetry-versions:
     name: test (telemetry ${{ matrix.telemetry }})
@@ -86,6 +90,7 @@ jobs:
           grep -q '{:telemetry, "== ${{ matrix.telemetry }}"}' mix.exs
           rm mix.lock
 
+      - run: mix local.hex --force && mix local.rebar --force
       - run: mix deps.get
       - run: mix test --include peer
 
@@ -113,12 +118,15 @@ jobs:
           restore-keys: |
             mix-dev-${{ runner.os }}-27-1.17-
 
+      - run: mix local.hex --force && mix local.rebar --force
       - run: mix deps.get
       - run: mix format --check-formatted
+      - run: mix deps.unlock --check-unused
+      - run: mix hex.audit
       - run: mix compile --warnings-as-errors
       - run: mix docs --warnings-as-errors
-      - name: Build Hex package
-        run: mix hex.build
+      - name: Build Hex package (and show its contents)
+        run: mix hex.build --unpack --output _pkg && find _pkg -type f | sort
 
   phoenix-smoke:
     name: smoke test on a fresh Phoenix app
@@ -137,6 +145,7 @@ jobs:
       - name: Generate a Phoenix app (default generator, Postgres)
         run: |
           mix local.hex --force
+          mix local.rebar --force
           mix archive.install hex phx_new --force
           mix phx.new smoke_app --no-install
 
@@ -160,3 +169,11 @@ jobs:
         run: |
           mix telemetry.explore --format json --output telescope.json
           python3 -c "import json; d = json.load(open('telescope.json')); assert d['schema_version'] == 1 and d['events'], 'no events'; print(len(d['events']), 'events')"
+
+      # stdout must contain only the JSON document (compile output is suppressed)
+      - name: mix telemetry.check --format json on stdout
+        working-directory: smoke_app
+        run: |
+          touch lib/smoke_app.ex
+          mix telemetry.check --strict --format json > check.json
+          python3 -c "import json; d = json.load(open('check.json')); assert d['status'] == 'passed' and d['exit_code'] == 0, d['counts']; print(d['counts'])"

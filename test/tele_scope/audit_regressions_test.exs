@@ -133,7 +133,7 @@ defmodule TeleScope.AuditRegressionsTest do
 
       assert Enum.any?(
                TeleScope.diagnose(cat),
-               &(&1.check == :capture_limited and &1.message =~ "Observer crashed")
+               &(&1.check == :capture_limited and &1.message =~ ~r/observer crashed/i)
              )
     end
 

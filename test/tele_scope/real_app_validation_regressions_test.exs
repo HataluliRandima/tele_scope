@@ -171,7 +171,7 @@ defmodule TeleScope.RealAppValidationRegressionsTest do
       assert d.detail.project_consumer
       # span-naming slip: suggest the span event that does exist
       assert [:val_dep, :notifier, :notify, :exception] in d.detail.similar
-      assert d.message =~ "did you mean [:val_dep, :notifier, :notify, :exception]"
+      assert d.suggestion =~ "Did you mean [:val_dep, :notifier, :notify, :exception]"
     end
 
     test "a dependency's optional integration is info", %{diags: diags} do

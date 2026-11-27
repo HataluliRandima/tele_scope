@@ -91,17 +91,37 @@ defmodule TeleScope do
   (if `trace: true`, the default) discovers names that are not in the
   catalog. See `TeleScope.Runtime.Capture` for options (`:duration`,
   `:trace`, `:track_handlers`, `:observer`, `:tracer`).
+
+  If the tracer cannot start (for example another TeleScope tracer is
+  running on OTP 26), the capture continues with the observer only and the
+  reason is reported as diagnostic `TS011`.
+
+  Raises `TeleScope.CaptureError` when the capture cannot start at all
+  (invalid options).
   """
   @spec capture(Catalog.t() | nil, keyword()) :: Catalog.t()
   def capture(catalog \\ nil, opts \\ []) do
     catalog = catalog || Catalog.new()
-    {:ok, pid} = start_capture(catalog, opts)
-    result = Capture.await(pid)
-    GenServer.stop(pid)
-    Catalog.add_capture(catalog, result)
+
+    case start_capture(catalog, opts) do
+      {:ok, pid} ->
+        result = Capture.await(pid)
+        GenServer.stop(pid)
+        Catalog.add_capture(catalog, result)
+
+      {:error, reason} ->
+        raise TeleScope.CaptureError, reason: reason
+    end
   end
 
-  @doc "Starts a non-blocking capture; finish it with `stop_capture/2`."
+  @doc """
+  Starts a non-blocking capture; finish it with `stop_capture/2`.
+
+  The capture is owned by the calling process: it stops (and cleans up all
+  handlers and trace patterns) if the caller exits. Returns `{:ok, pid}` or
+  `{:error, reason}` (`TeleScope.CaptureError` explains each reason).
+  """
+  @spec start_capture(Catalog.t() | nil, keyword()) :: {:ok, pid()} | {:error, term()}
   def start_capture(catalog, opts \\ []) do
     events =
       for e <- Catalog.events(catalog || Catalog.new()),
@@ -111,21 +131,46 @@ defmodule TeleScope do
     Capture.start(Keyword.put_new(opts, :events, events))
   end
 
-  @doc "Stops a capture started with `start_capture/2` and merges results."
-  def stop_capture(catalog, pid),
-    do: Catalog.add_capture(catalog || Catalog.new(), Capture.stop(pid))
+  @doc """
+  Stops a capture started with `start_capture/2` and merges its results.
 
-  @doc "Runs diagnostics."
+  Raises `TeleScope.CaptureError` if the capture is no longer running
+  (already stopped, or its owner exited).
+  """
+  @spec stop_capture(Catalog.t() | nil, pid()) :: Catalog.t()
+  def stop_capture(catalog, pid) do
+    case Capture.stop(pid) do
+      {:error, reason} -> raise TeleScope.CaptureError, reason: reason
+      result -> Catalog.add_capture(catalog || Catalog.new(), result)
+    end
+  end
+
+  @doc "Runs diagnostics (see `TeleScope.Diagnostics`)."
+  @spec diagnose(Catalog.t()) :: [Diagnostics.diagnostic()]
   defdelegate diagnose(catalog), to: Diagnostics, as: :run
 
   @doc "Telemetry.Metrics suggestions (see `TeleScope.Metrics`)."
+  @spec recommend_metrics(Catalog.t(), keyword()) :: [map()]
   defdelegate recommend_metrics(catalog, opts \\ []), to: Metrics, as: :recommend
 
-  @doc "Renders a report: `format: :console | :json`."
+  @doc """
+  Renders a report as a string: `format: :console` (default) or `:json`.
+
+  Other options: `:metrics` (suggestions to include), `:diagnostics`
+  (precomputed), `:apps` (only events of these applications), `:verbose`
+  (console only).
+  """
+  @spec report(Catalog.t(), keyword()) :: String.t()
   def report(catalog, opts \\ []) do
     case Keyword.get(opts, :format, :console) do
-      :json -> TeleScope.Reporters.JSON.render(catalog, opts)
-      :console -> TeleScope.Reporters.Console.render(catalog, opts)
+      :json ->
+        TeleScope.Reporters.JSON.render(catalog, opts)
+
+      :console ->
+        TeleScope.Reporters.Console.render(catalog, opts)
+
+      other ->
+        raise ArgumentError, "unknown report format #{inspect(other)}; expected :console or :json"
     end
   end
 

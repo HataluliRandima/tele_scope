@@ -19,21 +19,23 @@ defmodule TeleScope.Reporters.JSON do
       Keyword.get_lazy(opts, :diagnostics, fn -> TeleScope.Diagnostics.run(catalog) end)
 
     metrics = Keyword.get(opts, :metrics)
+    apps = Keyword.get(opts, :apps)
 
     %{
       schema_version: @schema_version,
-      generator: "tele_scope #{Application.spec(:tele_scope, :vsn) || "dev"}",
-      environment: %{
-        otp_release: System.otp_release(),
-        elixir: System.version(),
-        telemetry: to_string(Application.spec(:telemetry, :vsn) || "unknown")
-      },
+      generator: generator(),
+      environment: environment(),
+      filter: %{apps: apps},
       summary: Catalog.summary(catalog),
       static:
         catalog.static &&
           Map.update(catalog.static, :no_debug_info, [], &Enum.map(&1, fn m -> inspect(m) end)),
       runtime: catalog.runtime,
-      events: Enum.map(Catalog.events(catalog), &event/1),
+      events:
+        catalog
+        |> Catalog.events()
+        |> TeleScope.Reporters.Console.filter_apps(apps)
+        |> Enum.map(&event/1),
       patterns: Enum.map(Map.values(catalog.patterns), &pattern/1),
       spans: Enum.map(Catalog.spans(catalog), fn {p, roles} -> Map.put(roles, :prefix, p) end),
       diagnostics: diagnostics,
@@ -44,6 +46,46 @@ defmodule TeleScope.Reporters.JSON do
   @doc "Encodes the report as a JSON string."
   def render(catalog, opts \\ []),
     do: catalog |> to_map(opts) |> encode() |> IO.iodata_to_binary()
+
+  @doc """
+  The JSON document printed by `mix telemetry.check --format json`:
+
+      {"schema_version": 1, "status": "failed", "strict": true, "exit_code": 1,
+       "counts": {"error": 0, "warning": 1, "info": 12},
+       "summary": {...}, "diagnostics": [{"code": "TS002", ...}]}
+
+  Every diagnostic is included (info too), each with `fails_check`.
+  """
+  def check_map(%Catalog{} = catalog, diagnostics, verdict) do
+    failing = MapSet.new(verdict.failing)
+
+    %{
+      schema_version: @schema_version,
+      generator: generator(),
+      environment: environment(),
+      status: verdict.status,
+      strict: verdict.strict,
+      exit_code: if(verdict.status == :passed, do: 0, else: 1),
+      counts: verdict.counts,
+      summary: Catalog.summary(catalog),
+      runtime_captured: catalog.runtime != nil,
+      diagnostics: Enum.map(diagnostics, &Map.put(&1, :fails_check, MapSet.member?(failing, &1)))
+    }
+  end
+
+  @doc "Encodes `check_map/3` as a JSON string."
+  def render_check(catalog, diagnostics, verdict),
+    do: catalog |> check_map(diagnostics, verdict) |> encode() |> IO.iodata_to_binary()
+
+  defp generator, do: "tele_scope #{Application.spec(:tele_scope, :vsn) || "dev"}"
+
+  defp environment do
+    %{
+      otp_release: System.otp_release(),
+      elixir: System.version(),
+      telemetry: to_string(Application.spec(:telemetry, :vsn) || "unknown")
+    }
+  end
 
   defp event(%Event{} = e) do
     %{

@@ -3,15 +3,51 @@ defmodule Mix.Tasks.Telemetry.Check do
   @moduledoc """
   Runs TeleScope diagnostics and exits non-zero when problems are found.
 
-      mix telemetry.check                 # fail on :error diagnostics
-      mix telemetry.check --strict        # fail on :warning too
+      mix telemetry.check                       # fail on errors
+      mix telemetry.check --strict              # fail on errors and warnings (CI)
+      mix telemetry.check --format json         # machine-readable result on stdout
       mix telemetry.check --runtime --duration 5000
 
-  Static-only checks (no app start) catch: metrics/handlers referencing event
-  names nothing emits (typos), modules without debug info, incomplete spans
-  and unresolved dynamic call sites.
+  Without `--runtime` the check is purely static: the application is
+  compiled but not started. Static checks catch metrics and handlers that
+  reference event names nothing emits (typos, `TS002`), modules without
+  debug info (`TS006`), incomplete spans and unresolved dynamic call sites.
+  With `--runtime` the application is started and observed for `--duration`
+  milliseconds, which adds checks that need runtime evidence: crashed
+  handlers (`TS001`), metrics reading missing measurements (`TS003`),
+  sensitive metadata keys (`TS005`), and more.
+
+  Every diagnostic has a stable code; see the DIAGNOSTICS guide.
+
+  ## Options
+
+    * `--strict` - warnings fail the check too. Limitations (things
+      TeleScope could not see, such as unreadable modules) never fail it.
+    * `--format console|json` - output format (default `console`). JSON is
+      written to stdout (compilation output is suppressed) unless `--output`
+      is given.
+    * `--output PATH` - write the result to a file.
+    * `--verbose` - also print informational diagnostics.
+    * `--runtime` - start the application and capture runtime telemetry.
+    * `--duration MS` - capture window with `--runtime` (default 5000).
+    * `--serve` - with `--runtime`, start Phoenix endpoints (like `phx.server`).
+    * `--no-trace` - with `--runtime`, observe known events only (no
+      dynamic name discovery).
+
+  ## Exit status
+
+    * `0` - the check passed
+    * `1` - failing diagnostics were found (errors; warnings too with `--strict`)
+    * `2` - invalid usage, or the runtime capture could not start
+
+  A compilation failure of the project exits non-zero as reported by
+  `mix compile`.
   """
   use Mix.Task
+
+  alias TeleScope.Diagnostics
+  alias TeleScope.Mix.Helpers
+  alias TeleScope.Reporters.{Console, JSON}
 
   @switches [
     runtime: :boolean,
@@ -19,29 +55,30 @@ defmodule Mix.Tasks.Telemetry.Check do
     strict: :boolean,
     trace: :boolean,
     verbose: :boolean,
-    serve: :boolean
+    serve: :boolean,
+    format: :string,
+    output: :string
   ]
 
   @impl true
   def run(argv) do
-    {opts, _} = OptionParser.parse!(argv, strict: @switches)
-    {catalog, _} = TeleScope.Mix.Helpers.build(opts)
-    diags = TeleScope.diagnose(catalog)
+    opts = Helpers.parse!("telemetry.check", argv, @switches)
+    catalog = Helpers.build("telemetry.check", opts)
+    diagnostics = Diagnostics.run(catalog)
+    verdict = Diagnostics.evaluate(diagnostics, strict: opts[:strict] || false)
 
-    for d <- diags, opts[:verbose] || d.severity != :info do
-      Mix.shell().info("[#{d.severity}] #{d.check}: #{d.message}")
-    end
+    output =
+      case opts[:format] || "console" do
+        "json" ->
+          JSON.render_check(catalog, diagnostics, verdict)
 
-    counts = Enum.frequencies_by(diags, & &1.severity)
+        "console" ->
+          Console.render_check(diagnostics, verdict, verbose: opts[:verbose], catalog: catalog)
+      end
 
-    Mix.shell().info(
-      "\n#{counts[:error] || 0} error(s), #{counts[:warning] || 0} warning(s), #{counts[:info] || 0} info"
-    )
+    Helpers.emit(output, opts)
 
-    failing = if opts[:strict], do: [:error, :warning], else: [:error]
-
-    if Enum.any?(diags, &(&1.severity in failing)) do
-      Mix.raise("telemetry.check failed")
-    end
+    if verdict.status == :failed, do: exit({:shutdown, 1})
+    :ok
   end
 end

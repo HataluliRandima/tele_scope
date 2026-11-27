@@ -319,9 +319,13 @@ defmodule TeleScope.Discovery.StaticDiscoveryTest do
       assert r.sites == []
     end
 
-    test "missing directory and empty directory scan to nothing" do
+    test "missing directory and empty directory scan to nothing; the missing one is reported" do
       r = scan([{:none, "/nonexistent/ebin"}, {:empty, tmp_dir("empty")}])
-      assert r.sites == [] and r.errors == [] and r.stats.beams == 0
+      assert r.sites == [] and r.stats.beams == 0
+
+      assert r.errors == [
+               %{app: :none, path: "/nonexistent/ebin", reason: :missing_directory}
+             ]
     end
 
     test "modules defining related span events in different modules group together" do

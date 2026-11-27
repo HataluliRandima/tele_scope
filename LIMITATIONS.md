@@ -139,6 +139,12 @@ fundamental to the approach and should stay documented after the MVP.
 
 * "Not observed" means not observed in that capture window. There is no
   "dead event" diagnostic, by design.
+* `inactive_handler` (TS004) is a warning only when the event fired after
+  invocation counting for that handler started (millisecond timestamps);
+  a handler attached during the capture and an event that fired before it
+  was picked up only produce an info diagnostic.
+* `runtime_only_event` (TS013) relies on the tracer: with `trace: false`,
+  names absent from the static catalog are not observed at all.
 * `consumer_without_emitter` relies on the scan covering the emitter. Events
   emitted only by unscanned code (a release without debug info, or code
   outside `_build`) produce false warnings.
@@ -151,6 +157,18 @@ fundamental to the approach and should stay documented after the MVP.
   not part of a `:telemetry.span/3` span are guesses (flagged), and gauges are
   recognised by name only.
 * The JSON schema (version 1) is not stable yet.
+
+## Mix tasks
+
+* `--format json` without `--output` keeps stdout clean by compiling with a
+  quiet shell and printing progress to stderr. Two cases are outside
+  TeleScope's control: the very first run in a project, when Mix compiles
+  the TeleScope dependency itself to find the task, and `--runtime`, when
+  the application's own logs go to stdout. Use `--output`, or run
+  `mix compile` first.
+* `mix telemetry.check` exits `2` for invalid usage and when the capture
+  cannot start; a compilation failure of the project exits non-zero as
+  reported by `mix compile`.
 
 ## Trust boundaries
 
